@@ -1,0 +1,238 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = "mysql://schoolAttendance:Sensarsoft%40123@[2a02:4780:12:f6a7::1]:3306/pharmacy_management"
+}
+
+enum Role {
+  ADMIN
+  ADMINISTRATOR
+}
+
+enum AppPaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum StockMovementType {
+  IN
+  OUT
+}
+
+enum PaymentMode {
+  CASH
+  ONLINE
+}
+
+model Shop {
+  shop_id    Int       @id @default(autoincrement())
+  name       String
+  address    String
+  phone      String
+  email      String
+  logo       Bytes?
+  created_at DateTime  @default(now())
+  duedate    DateTime?
+  is_active  Boolean   @default(true)
+
+  users           User[]
+  admins          Admin[]
+  administrators  Administrator[]
+  payments        AppPayment[]
+  blocks          ShopBlock[]
+  SubmitTicket    SubmitTicket[]
+  Message         Message[]
+  finances        Finance[]
+  medicines       Medicine[]
+  medicineBatches MedicineBatch[]
+  bills           Bill[]
+
+  @@unique([name, address])
+}
+
+model User {
+  user_id   String
+  shop_id   Int
+  role      Role    @default(ADMIN)
+  password  String
+  is_active Boolean @default(true)
+
+  shop          Shop           @relation(fields: [shop_id], references: [shop_id])
+  admin         Admin?
+  administrator Administrator?
+  finances      Finance[]
+  submitTickets SubmitTicket[]
+
+  @@id([user_id, shop_id])
+}
+
+model Admin {
+  id          Int    @id @default(autoincrement())
+  shop_id     Int
+  user_id     String
+  name        String
+  designation String
+  phone       String
+  email       String
+
+  shop Shop @relation(fields: [shop_id], references: [shop_id])
+  user User @relation(fields: [user_id, shop_id], references: [user_id, shop_id])
+
+  @@unique([user_id, shop_id])
+}
+
+model Administrator {
+  id      Int    @id @default(autoincrement())
+  user_id String
+  shop_id Int
+  name    String
+  phone   String
+  email   String
+
+  shop Shop @relation(fields: [shop_id], references: [shop_id])
+  user User @relation(fields: [user_id, shop_id], references: [user_id, shop_id])
+
+  @@unique([user_id, shop_id])
+}
+
+model AppPayment {
+  id            Int              @id @default(autoincrement())
+  shop_id       Int
+  baseAmount    Int
+  gst           Float
+  amount        Float
+  paidAt        DateTime         @default(now())
+  periodStart   DateTime
+  periodEnd     DateTime
+  transactionId String?
+  status        AppPaymentStatus @default(PENDING)
+  createdAt     DateTime         @default(now())
+
+  shop Shop @relation(fields: [shop_id], references: [shop_id])
+}
+
+model ShopBlock {
+  id      Int    @id @default(autoincrement())
+  shop_id Int
+  reason  String
+
+  shop Shop @relation(fields: [shop_id], references: [shop_id])
+}
+
+model Finance {
+  id         Int       @id @default(autoincrement())
+  shop_id    Int
+  user_id    String
+  reason     String
+  type       String?
+  state      String?
+  amount     Float
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+
+  shop Shop @relation(fields: [shop_id], references: [shop_id])
+  user User @relation(fields: [user_id, shop_id], references: [user_id, shop_id])
+}
+
+model SubmitTicket {
+  id         Int      @id @default(autoincrement())
+  shop_id    Int
+  user_id    String
+  issue      String
+  created_at DateTime @default(now())
+
+  shop Shop @relation(fields: [shop_id], references: [shop_id])
+  user User @relation(fields: [user_id, shop_id], references: [user_id, shop_id])
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  shop_id    Int
+  message    String
+  created_at DateTime @default(now())
+
+  shop Shop @relation(fields: [shop_id], references: [shop_id])
+}
+
+model Medicine {
+  id         Int      @id @default(autoincrement())
+  shop_id    Int
+  name       String
+  category   String
+  ndc_code   String?
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+
+  shop      Shop            @relation(fields: [shop_id], references: [shop_id])
+  batches   MedicineBatch[]
+  billItems BillItem[]
+}
+
+model MedicineBatch {
+  id             Int      @id @default(autoincrement())
+  shop_id        Int
+  medicine_id    Int
+  batch_no       String
+  expiry_date    DateTime
+  quantity       Int
+  purchase_price Float
+  gst            Int
+  selling_price  Float
+  created_at     DateTime @default(now())
+
+  shop      Shop            @relation(fields: [shop_id], references: [shop_id])
+  medicine  Medicine        @relation(fields: [medicine_id], references: [id])
+  movements StockMovement[]
+  billItems BillItem[]
+}
+
+model StockMovement {
+  id            Int               @id @default(autoincrement())
+  shop_id       Int
+  batch_id      Int
+  movement_type StockMovementType
+  quantity      Int
+  reference     String?
+  movement_date DateTime          @default(now())
+
+  batch MedicineBatch @relation(fields: [batch_id], references: [id])
+}
+
+model Bill {
+  bill_id       Int
+  shop_id       Int
+  customer_name String
+  phone         String
+  doctor_name   String?
+  subtotal      Float
+  tax           Float
+  discount      Float
+  total         Float
+  paid_amount   Float
+  payment_mode  PaymentMode
+  created_at    DateTime @default(now())
+
+  shop  Shop       @relation(fields: [shop_id], references: [shop_id])
+  items BillItem[]
+
+  @@id([shop_id, bill_id])   // ✅ composite primary key
+}
+
+model BillItem {
+  id          Int   @id @default(autoincrement())
+  shop_id     Int
+  bill_id     Int
+  medicine_id Int
+  batch_id    Int
+  quantity    Int
+  unit_price  Float
+  total_price Float
+
+  bill Bill @relation(fields: [shop_id, bill_id],references: [shop_id, bill_id])
+  medicine Medicine      @relation(fields: [medicine_id], references: [id])
+  batch    MedicineBatch @relation(fields: [batch_id], references: [id])
+}

@@ -1,0 +1,29 @@
+import { Controller, Get, Post, Param, Body, ParseIntPipe } from '@nestjs/common';
+import { UserService } from './user.service';
+import { CreateUserDto } from './dto/create-user.dto';
+
+@Controller('users')
+export class UserController {
+  constructor(private readonly userService: UserService) {}
+
+  @Get(':shopId')
+  findAllByShop(@Param('shopId', ParseIntPipe) shopId: number) {
+    return this.userService.findAllByShop(shopId);
+  }
+
+  @Get(':shopId/:userId')
+  findOneByShop(
+    @Param('shopId', ParseIntPipe) shopId: number,
+    @Param('userId') userId: string,
+  ) {
+    return this.userService.findOneByShop(shopId, userId);
+  }
+
+  @Post(':shopId/admin')
+  addAdmin(
+    @Param('shopId', ParseIntPipe) shopId: number,
+    @Body() dto: CreateUserDto,
+  ) {
+    return this.userService.addAdmin({ ...dto, shop_id: shopId });
+  }
+}
