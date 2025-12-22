@@ -32,7 +32,6 @@ export class DashboardService {
   };
 }
 
-
  async getShopStats(shopId: number) {
     const shop = await prisma.shop.findUnique({ where: { shop_id: shopId } });
     if (!shop) throw new NotFoundException(`Shop with ID ${shopId} not found`);

@@ -14,8 +14,9 @@ enum Role {
 
 enum AppPaymentStatus {
   PENDING
-  SUCCESS
+  COMPLETED
   FAILED
+  REFUND
 }
 
 enum StockMovementType {
@@ -163,6 +164,7 @@ model Medicine {
   shop_id    Int
   name       String
   category   String
+  stock      Int
   ndc_code   String?
   is_active  Boolean  @default(true)
   created_at DateTime @default(now())
@@ -173,16 +175,29 @@ model Medicine {
 }
 
 model MedicineBatch {
-  id             Int      @id @default(autoincrement())
-  shop_id        Int
-  medicine_id    Int
-  batch_no       String
-  expiry_date    DateTime
-  quantity       Int
-  purchase_price Float
-  gst            Int
-  selling_price  Float
-  created_at     DateTime @default(now())
+  id               Int      @id @default(autoincrement())
+  shop_id          Int
+  medicine_id      Int
+  batch_no         String
+  expiry_date      DateTime
+  total_stock      Int?
+  quantity         Int
+  unit             Int
+  unit_price       Float
+  single_price     Float?
+  rack_no          String?
+  purchase_price   Float
+  purchase_stock   Int?
+  profit           Float?
+  manufacture_date DateTime
+  note             Json?
+  gst              Int?
+  selling_price    Float
+  name             String
+  phone            String
+  is_active        Boolean  @default(true)
+  purchased_date   DateTime @default(now())
+  created_at       DateTime @default(now())
 
   shop      Shop            @relation(fields: [shop_id], references: [shop_id])
   medicine  Medicine        @relation(fields: [medicine_id], references: [id])
@@ -196,6 +211,7 @@ model StockMovement {
   batch_id      Int
   movement_type StockMovementType
   quantity      Int
+  reason        String
   reference     String?
   movement_date DateTime          @default(now())
 
@@ -208,18 +224,18 @@ model Bill {
   customer_name String
   phone         String
   doctor_name   String?
-  subtotal      Float
-  tax           Float
-  discount      Float
+  subtotal      Float?
+  tax           Float?
+  discount      Float?
   total         Float
-  paid_amount   Float
+  paid_amount   Float?
   payment_mode  PaymentMode
-  created_at    DateTime @default(now())
+  created_at    DateTime    @default(now())
 
   shop  Shop       @relation(fields: [shop_id], references: [shop_id])
   items BillItem[]
 
-  @@id([shop_id, bill_id])   // ✅ composite primary key
+  @@id([shop_id, bill_id]) // ✅ composite primary key
 }
 
 model BillItem {
@@ -232,7 +248,7 @@ model BillItem {
   unit_price  Float
   total_price Float
 
-  bill Bill @relation(fields: [shop_id, bill_id],references: [shop_id, bill_id])
+  bill     Bill          @relation(fields: [shop_id, bill_id], references: [shop_id, bill_id])
   medicine Medicine      @relation(fields: [medicine_id], references: [id])
   batch    MedicineBatch @relation(fields: [batch_id], references: [id])
 }

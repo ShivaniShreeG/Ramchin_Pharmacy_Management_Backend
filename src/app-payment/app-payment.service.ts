@@ -6,7 +6,7 @@ import {
 import { PrismaClient, AppPaymentStatus } from '@prisma/client';
 
 const prisma = new PrismaClient();
-const BASE_YEARLY_AMOUNT = 40; // your base payment amount
+const BASE_YEARLY_AMOUNT = 10; // your base payment amount
 const GST_RATE = 0.18; // 18% GST
 
 @Injectable()
@@ -29,7 +29,7 @@ export class AppPaymentService {
     const duplicate = await prisma.appPayment.findFirst({
       where: {
         shop_id: shopId,
-        status: { in: [AppPaymentStatus.PENDING, AppPaymentStatus.SUCCESS] },
+        status: { in: [AppPaymentStatus.PENDING, AppPaymentStatus.COMPLETED] },
         OR: [{ periodStart: { gte: now } }, { periodEnd: { gte: now } }],
       },
     });
@@ -101,7 +101,7 @@ export class AppPaymentService {
       transactionId: transactionId ?? payment.transactionId,
     };
 
-    if (status === AppPaymentStatus.SUCCESS) {
+    if (status === AppPaymentStatus.COMPLETED) {
       updateData.paidAt = new Date();
 
       const [updatedPayment] = await prisma.$transaction([
@@ -226,7 +226,7 @@ export class AppPaymentService {
     const now = new Date();
     const result = await prisma.appPayment.updateMany({
       where: {
-        status: AppPaymentStatus.SUCCESS,
+        status: AppPaymentStatus.COMPLETED,
         periodEnd: { lt: now },
       },
       data: { status: AppPaymentStatus.FAILED },

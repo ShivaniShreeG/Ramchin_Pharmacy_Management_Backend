@@ -96,12 +96,10 @@ async createShopWithAdmin(dto: CreateShopAdminDto) {
   });
 }
 
-
   async findShopById(shop_id: number) {
     return prisma.shop.findUnique({ where: { shop_id } });
   }
 
-  // ✅ Send OTP
   async sendOtp(email: string, otp: string) {
     this.otpStore.set(email, { otp, expiresAt: Date.now() + 5 * 60 * 1000 });
 
@@ -129,7 +127,6 @@ async createShopWithAdmin(dto: CreateShopAdminDto) {
     }
   }
 
-  // ✅ Verify OTP
   async verifyOtp(email: string, otp: string): Promise<boolean> {
     const record = this.otpStore.get(email);
     if (!record) return false;

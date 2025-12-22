@@ -12,6 +12,10 @@ import { ProfileModule } from './profile/profile.module';
 import { AdminModule } from './admin/admin.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { HomeModule } from './home/home.module';
+import { MedicineBatchModule } from './medicine-batch/medicine-batch.module';
+import { MedicineModule } from './medicine/medicine.module';
+import { StockMovementModule } from './stock/stock-movement.module';
+import { InventoryModule } from './inventory/inventory.module';
 
 @Module({
   imports: [
@@ -25,7 +29,11 @@ import { HomeModule } from './home/home.module';
     ProfileModule,
     AdminModule,
     DashboardModule,
-    HomeModule
+    HomeModule,
+    MedicineBatchModule,
+    MedicineModule,
+    StockMovementModule,
+    InventoryModule
   ],
   controllers: [AppController],
   providers: [AppService],
