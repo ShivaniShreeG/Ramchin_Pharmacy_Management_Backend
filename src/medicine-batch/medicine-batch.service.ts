@@ -7,6 +7,29 @@ const prisma = new PrismaClient();
 @Injectable()
 export class MedicineBatchService {
 
+   async getAvailableBatches(medicineId: number) {
+    return prisma.medicineBatch.findMany({
+      where: {
+        medicine_id: medicineId,
+        is_active: true,
+        total_stock: { gt: 0 },
+      },
+      orderBy: [
+        { expiry_date: 'asc' },   // 🔥 FIFO by expiry
+        { created_at: 'asc' },    // 🔥 FIFO by arrival
+      ],
+      select: {
+        id: true,
+        batch_no: true,
+        expiry_date: true,
+        total_stock: true,
+        quantity: true,
+        unit: true,
+        selling_price: true,
+      },
+    });
+  }
+  
   create(dto: CreateMedicineBatchDto) {
     return prisma.medicineBatch.create({ data: dto });
   }

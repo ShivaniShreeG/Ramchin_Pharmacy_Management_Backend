@@ -5,6 +5,13 @@ import { MedicineService } from './medicine.service';
 export class MedicineController {
   constructor(private service: MedicineService) {}
 
+@Get('search')
+  search(
+    @Query('shop_id') shopId: string,
+    @Query('query') query: string,
+  ) {
+    return this.service.searchMedicines(+shopId, query);
+  }
   @Post()
   create(@Body() dto) {
     return this.service.create(dto);

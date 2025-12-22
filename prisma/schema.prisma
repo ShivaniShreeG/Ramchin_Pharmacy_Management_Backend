@@ -221,6 +221,7 @@ model StockMovement {
 model Bill {
   bill_id       Int
   shop_id       Int
+  user_id       String
   customer_name String
   phone         String
   doctor_name   String?

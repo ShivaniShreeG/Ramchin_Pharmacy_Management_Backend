@@ -38,6 +38,12 @@ removeBatch(
   );
 }
 
+
+  @Get('available/:medicineId')
+  getAvailableBatches(@Param('medicineId') medicineId: string) {
+    return this.service.getAvailableBatches(+medicineId);
+  }
+  
   @Get()
   findAll(@Query('shop_id') shop_id: string) {
     return this.service.findAll(+shop_id);
