@@ -166,6 +166,7 @@ model Medicine {
   category   String
   stock      Int
   ndc_code   String?
+  reorder    Int?
   is_active  Boolean  @default(true)
   created_at DateTime @default(now())
 
@@ -178,6 +179,7 @@ model MedicineBatch {
   id               Int      @id @default(autoincrement())
   shop_id          Int
   medicine_id      Int
+  HSN              String?
   batch_no         String
   expiry_date      DateTime
   total_stock      Int?

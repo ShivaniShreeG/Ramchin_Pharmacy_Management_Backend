@@ -8,16 +8,30 @@ const prisma = new PrismaClient();
 @Injectable()
 export class MedicineService {
 
-  async searchMedicines(shopId: number, query: string) {
+async searchMedicines(shopId: number, query: string) {
   const today = new Date();
 
   const medicines = await prisma.medicine.findMany({
     where: {
       shop_id: shopId,
       is_active: true,
-      name: {
-        contains: query,
-      },
+      OR: [
+  {
+    name: {
+      contains: query,
+    },
+  },
+  {
+    name: {
+      contains: query.toLowerCase(),
+    },
+  },
+  {
+    name: {
+      contains: query.toUpperCase(),
+    },
+  },
+],
       batches: {
         some: {
           is_active: true,
@@ -36,7 +50,7 @@ export class MedicineService {
           total_stock: { gt: 0 },
         },
         orderBy: {
-          created_at: 'asc', // ✅ FIFO
+          created_at: 'asc',
         },
         select: {
           id: true,
@@ -51,20 +65,57 @@ export class MedicineService {
     take: 10,
   });
 
-  /// calculate available_qty per batch
   return medicines.map(med => ({
     id: med.id,
     name: med.name,
     batches: med.batches.map(b => ({
       id: b.id,
       batch_no: b.batch_no,
-      available_qty: Math.floor((b.total_stock ?? 0) / (b.unit ?? 1)),
+      available_qty: b.total_stock ,
       selling_price: b.selling_price,
       unit: b.unit,
       expiry_date: b.expiry_date,
     })),
   }));
 }
+
+async getLowStockMedicines(shopId: number) {
+  const medicines = await prisma.medicine.findMany({
+    where: {
+      shop_id: shopId,
+      is_active: true,
+      reorder: {
+        not: null,
+      },
+      // 🔴 low stock condition
+      stock: {
+        lte: prisma.medicine.fields.reorder,
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      category: true,
+      reorder: true,
+      ndc_code: true,
+      stock: true,
+    },
+    orderBy: {
+      stock: 'asc', // optional: lowest stock first
+    },
+  });
+
+  // 🔁 rename stock → total_stock for frontend consistency
+  return medicines.map((m) => ({
+    id: m.id,
+    name: m.name,
+    category: m.category,
+    reorder: m.reorder,
+    ndc_code: m.ndc_code,
+    total_stock: m.stock ?? 0,
+  }));
+}
+
 
   
   create(dto: CreateMedicineDto) {

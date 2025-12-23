@@ -17,6 +17,7 @@ import { MedicineModule } from './medicine/medicine.module';
 import { StockMovementModule } from './stock/stock-movement.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { BillingModule } from './billing/billing.module';
+import { FinanceModule } from './finance/finance.module';
 
 @Module({
   imports: [
@@ -35,7 +36,8 @@ import { BillingModule } from './billing/billing.module';
     MedicineModule,
     StockMovementModule,
     InventoryModule,
-    BillingModule
+    BillingModule,
+    FinanceModule
   ],
   controllers: [AppController],
   providers: [AppService],
