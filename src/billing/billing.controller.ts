@@ -6,6 +6,7 @@ import {
   Query,
   Param,
   BadRequestException,
+  ParseIntPipe
 } from '@nestjs/common';
 import { BillingService } from './billing.service';
 import { CreateBillDto } from './dto/create-bill.dto';
@@ -17,6 +18,11 @@ export class BillingController {
   @Post()
   async createBill(@Body() dto: CreateBillDto) {
     return this.billingService.createBill(dto);
+  }
+
+  @Get('history/:shopId')
+  async getBillingHistory(@Param('shopId', ParseIntPipe) shopId: number) {
+    return this.billingService.getBillingHistory(shopId);
   }
 
   // ✅ STEP 1: PHONE → CUSTOMER NAMES

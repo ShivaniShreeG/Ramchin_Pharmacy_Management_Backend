@@ -255,3 +255,15 @@ model BillItem {
   medicine Medicine      @relation(fields: [medicine_id], references: [id])
   batch    MedicineBatch @relation(fields: [batch_id], references: [id])
 }
+
+model Supplier {
+  id         Int      @id @default(autoincrement())
+  shop_id    Int
+  name       String
+  phone      String
+  email      String?
+  address    String?
+  created_at DateTime @default(now())
+
+  @@unique([shop_id, phone])
+}

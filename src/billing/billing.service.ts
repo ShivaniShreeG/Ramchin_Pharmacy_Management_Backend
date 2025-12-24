@@ -7,6 +7,33 @@ const prisma = new PrismaClient();
 @Injectable()
 export class BillingService {
 
+async getBillingHistory(shopId: number) {
+  try {
+    const bills = await prisma.bill.findMany({
+      where: {
+        shop_id: shopId,
+      },
+      include: {
+        items: {
+          include: {
+            medicine: true, // include all medicine fields
+            batch: true,    // include all batch fields
+          },
+        },
+      },
+      orderBy: {
+        created_at: 'desc', // newest first
+      },
+    });
+
+    return bills;
+  } catch (error) {
+    console.error('Error fetching billing history:', error);
+    throw new Error('Failed to fetch billing history');
+  }
+}
+
+
   async getCustomerNamesByPhone(shopId: number, phone: string) {
   const bills = await prisma.bill.findMany({
     where: {

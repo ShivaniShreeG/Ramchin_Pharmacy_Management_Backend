@@ -19,6 +19,7 @@ import { InventoryModule } from './inventory/inventory.module';
 import { BillingModule } from './billing/billing.module';
 import { FinanceModule } from './finance/finance.module';
 import { ReorderModule } from './reorder/reorder.module';
+import { SupplierModule } from './supplier/supplier.module';
 
 @Module({
   imports: [
@@ -39,7 +40,8 @@ import { ReorderModule } from './reorder/reorder.module';
     InventoryModule,
     BillingModule,
     FinanceModule,
-    ReorderModule
+    ReorderModule,
+    SupplierModule
   ],
   controllers: [AppController],
   providers: [AppService],
