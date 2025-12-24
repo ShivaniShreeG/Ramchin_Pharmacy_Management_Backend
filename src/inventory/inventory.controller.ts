@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param, Patch, Get, Query } from '@nestjs/common';
+import { Controller, Post, Body, Param, Patch, Get, Query, BadRequestException } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
 import { UpdateInventoryStatusDto } from './dto/update-inventory-status.dto';
 import { CreateMedicineWithBatchDto } from './dto/create-medicine-with-batch.dto';
@@ -13,6 +13,44 @@ export class InventoryController {
     return this.service.updateMedicineOrBatchStatus(dto);
   }
 
+  @Get('medicine/:shopId/:medicineId/validate-batch')
+  async validateBatchNo(
+    @Param('shopId') shopId: string,
+    @Param('medicineId') medicineId: string,
+    @Query('batch_no') batchNo: string,
+  ) {
+    if (!shopId || !medicineId || !batchNo) {
+      throw new BadRequestException(
+        'shopId, medicineId and batch_no are required',
+      );
+    }
+
+    const exists = await this.service.checkBatchExists(
+      Number(shopId),
+      Number(medicineId),
+      batchNo.trim(),
+    );
+
+    return {
+      is_valid: !exists, // ✅ frontend expects this
+    };
+  }
+
+  @Get('medicine/check-name/:shopId')
+  async checkMedicineName(
+    @Param('shopId') shopId: string,
+    @Query('name') name: string,
+  ) {
+    if (!shopId || !name) {
+      return { exists: false, message: 'shop_id and name are required' };
+    }
+    const exists = await this.service.isMedicineNameTaken(
+      Number(shopId),
+      name,
+    );
+
+    return { exists };
+  }
   // Create Medicine + Batch + Stock
 @Post('medicine')
 async createMedicine(@Body() body: any) {
@@ -21,11 +59,11 @@ async createMedicine(@Body() body: any) {
     name: body.name,
     category: body.category,
     ndc_code: body.ndc_code,
-
+    reorder:body.reorder,
     batch_no: body.batch_no,
     manufacture_date: body.mfg_date,
     expiry_date: body.exp_date,
-
+    hsncode:body.hsncode,
     quantity: Number(body.quantity),
     unit: Number(body.unit),
 
@@ -66,7 +104,7 @@ createBatch(
     batch_no: body.batch_no,
     manufacture_date: body.mfg_date,
     expiry_date: body.exp_date,
-
+    hsncode:body.hsncode,
     quantity,
     unit,
 

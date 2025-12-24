@@ -8,6 +8,8 @@ export class CreateMedicineWithBatchDto {
   // Batch
   batch_no: string;
   manufacture_date: string;
+  reorder:number;
+  hsncode:string;
   expiry_date: string;
   quantity: number;
   unit: number;

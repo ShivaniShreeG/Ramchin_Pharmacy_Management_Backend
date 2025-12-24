@@ -18,6 +18,7 @@ import { StockMovementModule } from './stock/stock-movement.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { BillingModule } from './billing/billing.module';
 import { FinanceModule } from './finance/finance.module';
+import { ReorderModule } from './reorder/reorder.module';
 
 @Module({
   imports: [
@@ -37,7 +38,8 @@ import { FinanceModule } from './finance/finance.module';
     StockMovementModule,
     InventoryModule,
     BillingModule,
-    FinanceModule
+    FinanceModule,
+    ReorderModule
   ],
   controllers: [AppController],
   providers: [AppService],

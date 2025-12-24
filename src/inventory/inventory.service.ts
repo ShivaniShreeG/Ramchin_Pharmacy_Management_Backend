@@ -10,8 +10,36 @@ const prisma = new PrismaClient();
 @Injectable()
 export class InventoryService {
 
-  // ✅ CREATE MEDICINE + BATCH + STOCK
- async createMedicineWithBatchAndStock(dto: CreateMedicineWithBatchDto) {
+   async checkBatchExists(
+    shopId: number,
+    medicineId: number,
+    batchNo: string,
+  ): Promise<boolean> {
+    const batch = await prisma.medicineBatch.findFirst({
+      where: {
+        shop_id: shopId,
+        medicine_id: medicineId,
+        batch_no: batchNo,
+      },
+      select: { id: true },
+    });
+
+    return !!batch;
+  }
+
+   async isMedicineNameTaken(shop_id: number, name: string): Promise<boolean> {
+    const existing = await prisma.medicine.findFirst({
+      where: {
+        shop_id,
+        name: {
+          equals: name.trim(),
+        },
+      },
+    });
+    return !!existing;
+  }
+
+async createMedicineWithBatchAndStock(dto: CreateMedicineWithBatchDto) {
   return prisma.$transaction(async (tx) => {
 
     // 1️⃣ Create Medicine
@@ -22,6 +50,7 @@ export class InventoryService {
         category: dto.category,
         ndc_code: dto.ndc_code,
         stock: dto.stock_quantity,
+        reorder:dto.reorder,
       },
     });
 
@@ -34,7 +63,7 @@ export class InventoryService {
 
         manufacture_date: new Date(dto.manufacture_date),
         expiry_date: new Date(dto.expiry_date),
-
+        HSN: dto.hsncode,
         quantity: dto.quantity,
         unit: dto.unit,
         unit_price: dto.unit_price,
@@ -86,7 +115,7 @@ async createBatchWithStock(
 
         quantity: dto.quantity,
         unit: dto.unit,
-
+        HSN:dto.hsncode,
         unit_price: dto.unit_price,
         purchase_price: dto.purchase_price,
         selling_price: dto.selling_price,
@@ -124,9 +153,7 @@ async createBatchWithStock(
   });
 }
 
-
-
-  async getMedicineWithBatches(medicine_id: number) {
+async getMedicineWithBatches(medicine_id: number) {
   return prisma.medicine.findUnique({
     where: { id: medicine_id },
     include: {
@@ -232,6 +259,5 @@ async updateMedicineOrBatchStatus(dto: UpdateInventoryStatusDto) {
     };
   });
 }
-
 
 }

@@ -6,6 +6,38 @@ const prisma = new PrismaClient();
 
 @Injectable()
 export class BillingService {
+
+  async getCustomerNamesByPhone(shopId: number, phone: string) {
+  const bills = await prisma.bill.findMany({
+    where: {
+      shop_id: shopId,
+      phone: phone,
+    },
+    orderBy: {
+      created_at: 'desc',
+    },
+    select: {
+      customer_name: true,
+      phone: true,
+      created_at: true,
+    },
+  });
+
+  const map = new Map<string, any>();
+
+  for (const bill of bills) {
+    if (!map.has(bill.customer_name)) {
+      map.set(bill.customer_name, {
+        customer_name: bill.customer_name,
+        phone: bill.phone,
+        last_bill_date: bill.created_at,
+      });
+    }
+  }
+
+  return Array.from(map.values());
+}
+
   async createBill(input: CreateBillDto) {
     const {
       shop_id,
@@ -127,5 +159,55 @@ const newQuantity = Math.ceil(
       };
     });
   }
+
+  async getBillsByCustomer(
+  shopId: number,
+  phone: string,
+  customerName: string,
+) {
+  const bills = await prisma.bill.findMany({
+    where: {
+      shop_id: shopId,
+      phone: phone,
+      customer_name: customerName,
+    },
+    orderBy: {
+      created_at: 'desc',
+    },
+    include: {
+      items: {
+        include: {
+          medicine: {
+            select: { name: true },
+          },
+          batch: {
+            select: { batch_no: true },
+          },
+        },
+      },
+    },
+  });
+
+  return {
+    customer_name: customerName,
+    phone,
+    bills: bills.map(bill => ({
+      bill_id: bill.bill_id,
+      bill_date: bill.created_at,
+      doctor_name: bill.doctor_name,
+      total: bill.total,
+      payment_mode: bill.payment_mode,
+      items: bill.items.map(item => ({
+        medicine_name: item.medicine.name,
+        batch_no: item.batch.batch_no,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        total_price: item.total_price,
+      })),
+    })),
+  };
+}
+
+
 }
 

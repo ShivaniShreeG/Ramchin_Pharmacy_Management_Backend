@@ -5,7 +5,7 @@ export class CreateBatchWithStockDto {
 
   manufacture_date: string;
   expiry_date: string;
-
+  hsncode:string;
   quantity: number;
   unit: number;
 
