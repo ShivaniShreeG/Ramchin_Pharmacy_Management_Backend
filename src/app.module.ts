@@ -20,6 +20,8 @@ import { BillingModule } from './billing/billing.module';
 import { FinanceModule } from './finance/finance.module';
 import { ReorderModule } from './reorder/reorder.module';
 import { SupplierModule } from './supplier/supplier.module';
+import { SalesModule } from './sales/sale.module';
+import { MedicineValueModule } from './medicine-value/medicine-value.module';
 
 @Module({
   imports: [
@@ -41,7 +43,9 @@ import { SupplierModule } from './supplier/supplier.module';
     BillingModule,
     FinanceModule,
     ReorderModule,
-    SupplierModule
+    SupplierModule,
+    SalesModule,
+    MedicineValueModule
   ],
   controllers: [AppController],
   providers: [AppService],

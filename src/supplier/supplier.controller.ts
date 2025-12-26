@@ -7,6 +7,8 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
+  BadRequestException
 } from '@nestjs/common';
 import { SupplierService } from './supplier.service';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
@@ -24,7 +26,18 @@ export class SupplierController {
   ) {
     return this.supplierService.create(shopId, dto);
   }
+ // ✅ Search supplier by phone (or partial phone)
+  @Get('search/by-phone/:shopId')
+  async getSupplierByPhone(
+    @Param('shopId', ParseIntPipe) shopId: number,
+    @Query('phone') phone: string,
+  ) {
+    if (!phone) {
+      throw new BadRequestException('phone is required');
+    }
 
+    return this.supplierService.getSupplierByPhone(shopId, phone.trim());
+  }
   // 📄 List suppliers by shop
   @Get(':shopId')
   findAll(@Param('shopId', ParseIntPipe) shopId: number) {

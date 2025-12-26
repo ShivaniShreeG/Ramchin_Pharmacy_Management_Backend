@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param, Patch, Get, Query, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, Param, Patch, Get, Query, BadRequestException, ParseIntPipe } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
 import { UpdateInventoryStatusDto } from './dto/update-inventory-status.dto';
 import { CreateMedicineWithBatchDto } from './dto/create-medicine-with-batch.dto';
@@ -7,6 +7,13 @@ import { CreateBatchWithStockDto } from './dto/create-batch-with-stock.dto';
 @Controller('inventory')
 export class InventoryController {
   constructor(private service: InventoryService) {}
+
+  @Get('history/:shop_id')
+getAllMedicineHistory(
+  @Param('shop_id', ParseIntPipe) shop_id: number,
+) {
+  return this.service.getMedicineStockHistory(shop_id);
+}
 
   @Patch('status')
   updateStatus(@Body() dto: UpdateInventoryStatusDto) {

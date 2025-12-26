@@ -9,5 +9,11 @@ export class HomeController {
   async getFinanceSummary(@Param('shopId', ParseIntPipe) shopId: number) {
     return this.homeService.getFinanceSummary(shopId);
   }
-
+@Get('totals/:shopId')
+  async getTotals(
+    @Param('shopId', ParseIntPipe) shopId: number,
+    @Query('date') date?: string,
+  ) {
+    return this.homeService.getTotals(shopId, date);
+  }
 }

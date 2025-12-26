@@ -10,6 +10,31 @@ const prisma = new PrismaClient();
 @Injectable()
 export class InventoryService {
 
+async getMedicineStockHistory(shop_id: number) {
+  return prisma.medicine.findMany({
+    where: {
+      shop_id,
+    },
+    include: {
+      batches: {
+        include: {
+          movements: {
+            orderBy: {
+              movement_date: 'desc',
+            },
+          },
+        },
+        orderBy: {
+          expiry_date: 'asc',
+        },
+      },
+    },
+    orderBy: {
+      name: 'asc',
+    },
+  });
+}
+
    async checkBatchExists(
     shopId: number,
     medicineId: number,

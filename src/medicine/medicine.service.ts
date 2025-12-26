@@ -8,6 +8,34 @@ const prisma = new PrismaClient();
 @Injectable()
 export class MedicineService {
 
+  async getAllMedicinesWithBatches(shop_id: number) {
+  return prisma.medicine.findMany({
+    where: {
+      shop_id,
+      is_active: true, // medicine must be active
+      stock: {
+        not: 0, // stock must not be zero
+      },
+    },
+    include: {
+      batches: {
+        where: {
+          is_active: true, // batch must be active
+          total_stock: {
+            not: 0, // batch stock must not be zero
+          },
+        },
+        orderBy: {
+          created_at: 'desc',
+        },
+      },
+    },
+    orderBy: {
+      created_at: 'desc',
+    },
+  });
+}
+
 async searchMedicines(shopId: number, query: string) {
   const today = new Date();
 

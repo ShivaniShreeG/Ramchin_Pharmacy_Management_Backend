@@ -8,6 +8,23 @@ const prisma = new PrismaClient();
 @Injectable()
 export class SupplierService {
 
+  async getSupplierByPhone(shopId: number, phone: string) {
+    return prisma.supplier.findMany({
+      where: {
+        shop_id: shopId,
+        phone: {
+          contains: phone, // allows partial match
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        email: true,
+        address: true,
+      },
+    });
+  }
   // ➕ Create Supplier
   create(shopId: number, dto: CreateSupplierDto) {
     return prisma.supplier.create({

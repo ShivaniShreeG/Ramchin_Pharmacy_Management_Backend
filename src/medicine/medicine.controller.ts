@@ -5,6 +5,11 @@ import { MedicineService } from './medicine.service';
 export class MedicineController {
   constructor(private service: MedicineService) {}
 
+  @Get('available/shop/:shop_id')
+getAllMedicines(@Param('shop_id') shop_id: string) {
+  return this.service.getAllMedicinesWithBatches(+shop_id);
+}
+
   @Get('low-stock/:shopId')
   async getLowStockMedicines(
     @Param('shopId') shopId: string,
