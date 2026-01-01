@@ -12,9 +12,10 @@ export class CreateMedicineBatchDto {
   @IsInt() unit: number;
 
   @IsNumber() unit_price: number;
-  @IsNumber() purchase_price: number;
-  @IsNumber() selling_price: number;
-
+  @IsNumber() purchase_price_unit: number;
+  @IsNumber() selling_price_unit: number;
+ @IsNumber() purchase_price_quantity: number;
+  @IsNumber() selling_price_quantity: number;
   @IsOptional() single_price?: number;
   @IsOptional() profit?: number;
   @IsOptional() gst?: number;

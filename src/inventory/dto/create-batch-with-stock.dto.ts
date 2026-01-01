@@ -1,24 +1,28 @@
 export class CreateBatchWithStockDto {
   shop_id: number;
-
   batch_no: string;
-
   manufacture_date: string;
   expiry_date: string;
-  hsncode:string;
+  hsncode?: string;
   quantity: number;
+  free_quantity?: number;
+  total_quantity: number;
   unit: number;
 
-  unit_price: number;       // price per unit
-  purchase_price: number;  // price per pack
-  selling_price: number;
-
-  rack_no?: string;
+  purchase_price_unit: number;
+  purchase_price_quantity: number;
+  selling_price_unit: number;
+  selling_price_quantity: number;
+  mrp?: number;
   profit?: number;
+  purchase_details?: any;
+  rack_no?: string;
 
-  seller_name: string;
-  seller_phone: string;
+  supplier_id?: number;
 
   stock_quantity: number;
   reason: string;
+
+  seller_name: string;
+  seller_phone: string;
 }

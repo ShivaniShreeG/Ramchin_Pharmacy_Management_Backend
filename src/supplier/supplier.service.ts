@@ -70,11 +70,17 @@ export class SupplierService {
   }
 
   // ❌ Delete supplier (shop-safe)
-  async remove(shopId: number, id: number) {
-    await this.findOne(shopId, id);
+async remove(shopId: number, id: number) { 
+  await this.findOne(shopId, id);
 
-    return prisma.supplier.delete({
-      where: { id },
-    });
-  }
+  return prisma.supplier.update({
+    where: { 
+      id 
+    },
+    data: { 
+      is_active: false // ✅ Soft delete instead of hard delete
+    }
+  });
+}
+
 }

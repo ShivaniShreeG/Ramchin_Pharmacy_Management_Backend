@@ -131,7 +131,7 @@ const newQuantity = Math.ceil(
             bill_id,
             medicine_id: item.medicine_id,
             batch_id: item.batch_id,
-            quantity: item.quantity, // tablets
+            unit: item.quantity, // tablets
             unit_price: item.unit_price,
             total_price: item.total_price,
           },
@@ -227,7 +227,7 @@ const newQuantity = Math.ceil(
       items: bill.items.map(item => ({
         medicine_name: item.medicine.name,
         batch_no: item.batch.batch_no,
-        quantity: item.quantity,
+        quantity: item.unit,
         unit_price: item.unit_price,
         total_price: item.total_price,
       })),

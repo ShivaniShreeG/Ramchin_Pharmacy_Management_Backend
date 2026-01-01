@@ -9,6 +9,20 @@ const prisma = new PrismaClient();
 @Injectable()
 export class UserService {
   // 🔹 Get all active admins in a lodge
+
+   async checkUserAvailability(shopId: number, userId: string) {
+    const exists = await prisma.user.findUnique({
+      where: {
+        user_id_shop_id: {
+          user_id: userId,
+          shop_id: Number(shopId),
+        },
+      },
+    });
+
+    return { available: !exists };
+  }
+  
   async getAdminsByShop(shopId: number) {
     const admins = await prisma.admin.findMany({
       where: {

@@ -66,26 +66,28 @@ async createMedicine(@Body() body: any) {
     name: body.name,
     category: body.category,
     ndc_code: body.ndc_code,
-    reorder:body.reorder,
+    reorder: body.reorder,
     batch_no: body.batch_no,
     manufacture_date: body.mfg_date,
     expiry_date: body.exp_date,
-    hsncode:body.hsncode,
+    hsncode: body.hsncode,
     quantity: Number(body.quantity),
+    free_quantity: Number(body.free_quantity || 0),
+    total_quantity: Number(body.total_quantity),
     unit: Number(body.unit),
-
-    unit_price: Number(body.purchase_price),
-    purchase_price: Number(body.total_cost),
-    selling_price: Number(body.selling_price),
-    profit: body.profit,
-
+    purchase_price_unit: Number(body.purchasePerUnit),
+    purchase_price_quantity: Number(body.purchasePerQuantity),
+    selling_price_unit: Number(body.sellingPerUnit),
+    selling_price_quantity: Number(body.sellingPerQuantity),
+    mrp: Number(body.mrp),
+    profit: Number(body.profit),
+    purchase_details: body.purchase_details,
     rack_no: body.rack_no,
-
-    seller_name: body.seller_name,
-    seller_phone: body.phone,
-
-    stock_quantity: Number(body.stock),
+    supplier_id: body.selectedSupplierId,
+    stock_quantity: Number(body.total_stock),
     reason: 'Initial Stock',
+    seller_name: body.seller_name || '',
+    seller_phone: body.phone || '',
   };
 
   return this.service.createMedicineWithBatchAndStock(dto);
@@ -98,36 +100,31 @@ createBatch(
   @Param('medicineId') medicineId: string,
   @Body() body: any,
 ) {
-  const quantity = Number(body.quantity);
-  const unit = Number(body.unit);
-  const unitPrice = Number(body.purchase_price);
-
-  const totalStock = quantity * unit;
-  const totalCost = unitPrice * totalStock;
 
   const dto: CreateBatchWithStockDto = {
     shop_id: Number(body.shop_id),
-
-    batch_no: body.batch_no,
+batch_no: body.batch_no,
     manufacture_date: body.mfg_date,
     expiry_date: body.exp_date,
-    hsncode:body.hsncode,
-    quantity,
-    unit,
-
-    // ✅ YOUR LOGIC (NOW CONSISTENT)
-    unit_price: unitPrice,         // price per unit
-    purchase_price: totalCost,     // total cost
-    selling_price: Number(body.selling_price),
-
+    hsncode: body.hsncode,
+    quantity: Number(body.quantity),
+    free_quantity: Number(body.free_quantity || 0),
+    total_quantity: Number(body.total_quantity),
+    unit: Number(body.unit),
+    purchase_price_unit: Number(body.purchasePerUnit),
+    purchase_price_quantity: Number(body.purchasePerQuantity),
+    selling_price_unit: Number(body.sellingPerUnit),
+    selling_price_quantity: Number(body.sellingPerQuantity),
+    mrp: Number(body.mrp),
+    profit: Number(body.profit),
+    purchase_details: body.purchase_details,
     rack_no: body.rack_no,
-    profit:Number(body.profit),
-
-    seller_name: body.seller_name,
-    seller_phone: body.seller_phone,
-
-    stock_quantity: totalStock,
-    reason: body.reason ?? 'New Batch',
+    supplier_id: body.selectedSupplierId,
+     stock_quantity: Number(body.total_stock), // ✅ Fixed: removed duplicate
+    reason: body.reason ?? 'New Batch', // ✅ Fixed: removed duplicate
+    seller_name: body.seller_name || '',
+    seller_phone: body.phone || '',
+   
   };
 
   return this.service.createBatchWithStock(+medicineId, dto);

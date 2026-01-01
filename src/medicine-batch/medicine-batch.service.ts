@@ -25,7 +25,7 @@ export class MedicineBatchService {
         total_stock: true,
         quantity: true,
         unit: true,
-        selling_price: true,
+        selling_price_unit: true,
       },
     });
   }

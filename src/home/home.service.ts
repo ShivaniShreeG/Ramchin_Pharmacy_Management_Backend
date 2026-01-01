@@ -63,12 +63,12 @@ async getFinanceSummary(shopId: number) {
   // 1️⃣ Fetch all active batches
   const batches = await prisma.medicineBatch.findMany({
     where: { shop_id: shopId, is_active: true },
-    select: { total_stock: true, selling_price: true, unit_price: true, medicine_id: true },
+    select: { total_stock: true, selling_price_unit: true, purchase_price_unit: true, medicine_id: true },
   });
 
   // 2️⃣ Calculate overall stock value
   const overallValue = batches.reduce(
-    (acc, batch) => acc + (batch.total_stock ?? 0) * batch.selling_price,
+    (acc, batch) => acc + (batch.total_stock ?? 0) * batch.selling_price_unit,
     0,
   );
 
@@ -107,9 +107,9 @@ async getFinanceSummary(shopId: number) {
 
     for (const bill of bills) {
       for (const item of bill.items) {
-        totalUnitsSold += item.quantity;
+        totalUnitsSold += item.unit;
         totalSales += item.total_price;
-        totalProfit += (item.batch.selling_price - item.batch.unit_price) * item.quantity;
+        totalProfit += (item.batch.selling_price_unit - item.batch.purchase_price_unit) * item.unit;
       }
     }
   }

@@ -12,12 +12,12 @@ export class MedicineValueService {
       where: { shop_id: shopId, is_active: true },
       select: {
         total_stock: true,
-        selling_price: true,
+        selling_price_unit: true,
       },
     });
 
     const totalValue = batches.reduce(
-      (acc, batch) => acc + (batch.total_stock ?? 0) * batch.selling_price,
+      (acc, batch) => acc + (batch.total_stock ?? 0) * batch.selling_price_unit,
       0,
     );
 
@@ -31,7 +31,7 @@ export class MedicineValueService {
       select: {
         medicine_id: true,
         total_stock: true,
-        selling_price: true,
+        selling_price_unit: true,
         medicine: { select: { name: true } },
       },
     });
@@ -40,7 +40,7 @@ export class MedicineValueService {
 
     batches.forEach(batch => {
       const name = batch.medicine.name;
-      medicineMap[name] = (medicineMap[name] || 0) + ((batch.total_stock ?? 0) * batch.selling_price);
+      medicineMap[name] = (medicineMap[name] || 0) + ((batch.total_stock ?? 0) * batch.selling_price_unit);
     });
 
     return Object.entries(medicineMap).map(([medicine, value]) => ({ medicine, value }));
@@ -55,7 +55,7 @@ export class MedicineValueService {
         batch_no: true,
         medicine: { select: { name: true } },
         total_stock: true,
-        selling_price: true,
+        selling_price_unit: true,
       },
     });
 
@@ -63,7 +63,7 @@ export class MedicineValueService {
       batchId: batch.id,
       batchNo: batch.batch_no,
       medicine: batch.medicine.name,
-      value: (batch.total_stock ?? 0) * batch.selling_price,
+      value: (batch.total_stock ?? 0) * batch.selling_price_unit,
     }));
   }
 }

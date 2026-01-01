@@ -19,7 +19,7 @@ export class ReorderService {
       include: {
         batches: {
           where: { is_active: true },
-          orderBy: { purchased_date: 'desc' },
+          orderBy: { created_at: 'desc' },
           take: 1, // only last supplier needed
         },
       },
@@ -34,42 +34,42 @@ export class ReorderService {
         category: medicine.category,
         current_stock: medicine.stock,
         reorder_level: medicine.reorder,
-        last_supplier: lastBatch
-          ? {
-              name: lastBatch.name,
-              phone: lastBatch.phone,
-            }
-          : null,
+        // last_supplier: lastBatch
+        //   ? {
+        //       name: lastBatch.name,
+        //       phone: lastBatch.phone,
+        //     }
+        //   : null,
       };
     });
   }
 
-  async getSupplierWiseReorderList(shopId: number) {
-    const reorderList = await this.getReorderMedicinesWithSupplier(shopId);
+  // async getSupplierWiseReorderList(shopId: number) {
+  //   const reorderList = await this.getReorderMedicinesWithSupplier(shopId);
 
-    const groupedSuppliers: Record<string, any> = {};
+  //   const groupedSuppliers: Record<string, any> = {};
 
-    reorderList.forEach((item) => {
-      if (!item.last_supplier) return;
+  //   reorderList.forEach((item) => {
+  //     // if (!item.last_supplier) return;
 
-      const supplierKey = `${item.last_supplier.name}_${item.last_supplier.phone}`;
+  //     // const supplierKey = `${item.last_supplier.name}_${item.last_supplier.phone}`;
 
-      if (!groupedSuppliers[supplierKey]) {
-        groupedSuppliers[supplierKey] = {
-          supplier: item.last_supplier,
-          medicines: [],
-        };
-      }
+  //     // if (!groupedSuppliers[supplierKey]) {
+  //     //   groupedSuppliers[supplierKey] = {
+  //     //     supplier: item.last_supplier,
+  //     //     medicines: [],
+  //     //   };
+  //     // }
 
-      groupedSuppliers[supplierKey].medicines.push({
-        medicine_id: item.medicine_id,
-        medicine_name: item.medicine_name,
-        category: item.category,
-        current_stock: item.current_stock,
-        reorder_level: item.reorder_level,
-      });
-    });
+  //     groupedSuppliers[supplierKey].medicines.push({
+  //       medicine_id: item.medicine_id,
+  //       medicine_name: item.medicine_name,
+  //       category: item.category,
+  //       current_stock: item.current_stock,
+  //       reorder_level: item.reorder_level,
+  //     });
+  //   });
 
-    return Object.values(groupedSuppliers);
-  }
+  //   return Object.values(groupedSuppliers);
+  // }
 }

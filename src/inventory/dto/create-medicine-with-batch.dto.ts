@@ -1,32 +1,33 @@
 export class CreateMedicineWithBatchDto {
-  // Medicine
   shop_id: number;
   name: string;
   category: string;
   ndc_code?: string;
+  reorder?: number;
 
-  // Batch
   batch_no: string;
   manufacture_date: string;
-  reorder:number;
-  hsncode:string;
   expiry_date: string;
+  hsncode?: string;
   quantity: number;
+  free_quantity?: number;
+  total_quantity: number;
   unit: number;
-  unit_price: number;       // purchase_price per unit
-  purchase_price: number;   // total purchase price
-  selling_price: number;
-  single_price?: number;
-  rack_no?: string;
-  gst?: number;
+
+  purchase_price_unit: number;
+  purchase_price_quantity: number;
+  selling_price_unit: number;
+  selling_price_quantity: number;
+  mrp?: number;
   profit?: number;
-  note?: any;
+  purchase_details?: any;
+  rack_no?: string;
 
-  // Seller
-  seller_name: string;
-  seller_phone: string;
+  supplier_id?: number;
 
-  // Stock
   stock_quantity: number;
   reason: string;
+
+  seller_name: string; // optional if supplier_id is provided
+  seller_phone: string; // optional if supplier_id is provided
 }

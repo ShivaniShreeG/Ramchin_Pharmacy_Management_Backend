@@ -44,12 +44,12 @@ export class SalesService {
       totalSales += bill.total;
 
       for (const item of bill.items) {
-        totalUnitsSold += item.quantity;
+        totalUnitsSold += item.unit;
 
-        const purchasePricePerUnit = item.batch.unit_price;
-        const sellingPricePerUnit = item.batch.selling_price;
+        const purchasePricePerUnit = item.batch.purchase_price_unit;
+        const sellingPricePerUnit = item.batch.selling_price_unit;
 
-        const profit = (sellingPricePerUnit - purchasePricePerUnit) * item.quantity;
+        const profit = (sellingPricePerUnit - purchasePricePerUnit) * item.unit;
         totalProfit += profit;
 
         // Medicine-wise aggregation
@@ -65,8 +65,8 @@ export class SalesService {
         }
 
         const m = medicineWise.get(key);
-        m.quantity_units += item.quantity;
-        m.quantity_strips += item.quantity / item.batch.unit;
+        m.quantity_units += item.unit;
+        m.quantity_strips += item.unit / item.batch.unit;
         m.sales += item.total_price;
         m.profit += profit;
       }

@@ -51,6 +51,7 @@ model Shop {
   medicines       Medicine[]
   medicineBatches MedicineBatch[]
   bills           Bill[]
+  stockMovements  StockMovement[]
 
   @@unique([name, address])
 }
@@ -67,6 +68,7 @@ model User {
   administrator Administrator?
   finances      Finance[]
   submitTickets SubmitTicket[]
+  bills         Bill[]
 
   @@id([user_id, shop_id])
 }
@@ -176,35 +178,38 @@ model Medicine {
 }
 
 model MedicineBatch {
-  id               Int      @id @default(autoincrement())
-  shop_id          Int
-  medicine_id      Int
-  HSN              String?
-  batch_no         String
-  expiry_date      DateTime
-  total_stock      Int?
-  quantity         Int
-  unit             Int
-  unit_price       Float
-  single_price     Float?
-  rack_no          String?
-  purchase_price   Float
-  purchase_stock   Int?
-  profit           Float?
-  manufacture_date DateTime
-  note             Json?
-  gst              Int?
-  selling_price    Float
-  name             String
-  phone            String
-  is_active        Boolean  @default(true)
-  purchased_date   DateTime @default(now())
-  created_at       DateTime @default(now())
+  id                      Int      @id @default(autoincrement())
+  shop_id                 Int
+  medicine_id             Int
+  HSN                     String?
+  batch_no                String
+  expiry_date             DateTime
+  manufacture_date        DateTime
+  total_stock             Int?
+  total_quantity          Int?
+  quantity                Int
+  free_quantity           Int?
+  unit                    Int
+  rack_no                 String?
+  mrp                     Float?
+  profit                  Float?
+  purchase_price_unit     Float
+  purchase_price_quantity Float
+  selling_price_quantity  Float
+  selling_price_unit      Float
+  purchase_details        Json?
+  supplier_id             Int? // ✅ THIS WAS MISSING
+  is_active               Boolean  @default(true)
+  created_at              DateTime @default(now())
 
-  shop      Shop            @relation(fields: [shop_id], references: [shop_id])
-  medicine  Medicine        @relation(fields: [medicine_id], references: [id])
+  shop     Shop      @relation(fields: [shop_id], references: [shop_id])
+  medicine Medicine  @relation(fields: [medicine_id], references: [id])
+  supplier Supplier? @relation(fields: [supplier_id], references: [id])
+
   movements StockMovement[]
   billItems BillItem[]
+
+  @@unique([shop_id, medicine_id, batch_no])
 }
 
 model StockMovement {
@@ -217,6 +222,7 @@ model StockMovement {
   reference     String?
   movement_date DateTime          @default(now())
 
+  shop  Shop          @relation(fields: [shop_id], references: [shop_id])
   batch MedicineBatch @relation(fields: [batch_id], references: [id])
 }
 
@@ -236,6 +242,7 @@ model Bill {
   created_at    DateTime    @default(now())
 
   shop  Shop       @relation(fields: [shop_id], references: [shop_id])
+  user  User       @relation(fields: [user_id, shop_id], references: [user_id, shop_id])
   items BillItem[]
 
   @@id([shop_id, bill_id]) // ✅ composite primary key
@@ -247,7 +254,7 @@ model BillItem {
   bill_id     Int
   medicine_id Int
   batch_id    Int
-  quantity    Int
+  unit        Int
   unit_price  Float
   total_price Float
 
@@ -257,13 +264,15 @@ model BillItem {
 }
 
 model Supplier {
-  id         Int      @id @default(autoincrement())
+  id         Int             @id @default(autoincrement())
   shop_id    Int
   name       String
   phone      String
   email      String?
   address    String?
-  created_at DateTime @default(now())
+  is_active  Boolean         @default(true)
+  created_at DateTime        @default(now())
+  batches    MedicineBatch[]
 
-  @@unique([shop_id, phone])
+  @@unique([shop_id, name, phone])
 }
