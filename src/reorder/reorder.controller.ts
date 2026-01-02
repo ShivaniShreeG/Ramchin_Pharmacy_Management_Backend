@@ -12,11 +12,11 @@ export class ReorderController {
     return this.Service.getReorderMedicinesWithSupplier(shopId);
   }
 
-  // @Get('supplier-wise/:shopId')
-  // async getSupplierWiseReorder(
-  //   @Param('shopId', ParseIntPipe) shopId: number,
-  // ) {
-  //   return this.Service.getSupplierWiseReorderList(shopId);
-  // }
+  @Get('supplier-wise/:shopId')
+  async getSupplierWiseReorder(
+    @Param('shopId', ParseIntPipe) shopId: number,
+  ) {
+    return this.Service.getSupplierWiseReorderList(shopId);
+  }
   
 }

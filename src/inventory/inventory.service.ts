@@ -74,39 +74,43 @@ async createMedicineWithBatchAndStock(dto: CreateMedicineWithBatchDto) {
         name: dto.name,
         category: dto.category,
         ndc_code: dto.ndc_code,
-        stock: dto.stock_quantity,
-        reorder:dto.reorder,
+        stock: dto.total_stock, // ✅ FIXED
+        reorder: dto.reorder,
       },
     });
 
     // 2️⃣ Create Batch
-  const batch = await tx.medicineBatch.create({
-  data: {
-    shop_id: dto.shop_id,
-    medicine_id: medicine.id,
-    batch_no: dto.batch_no,
-    manufacture_date: new Date(dto.manufacture_date),
-    expiry_date: new Date(dto.expiry_date),
-    HSN: dto.hsncode,
-    quantity: dto.quantity,
-    free_quantity: dto.free_quantity ?? 0,
-    total_quantity: dto.total_quantity,
-    unit: dto.unit,
-    purchase_price_unit: dto.purchase_price_unit,
-    purchase_price_quantity: dto.purchase_price_quantity,
-    selling_price_unit: dto.selling_price_unit,
-    selling_price_quantity: dto.selling_price_quantity,
-    mrp: dto.mrp,
-    profit: dto.profit,
-    purchase_details: dto.purchase_details,
-    rack_no: dto.rack_no,
-    supplier_id: dto.supplier_id,
-    total_stock: dto.stock_quantity,
-    is_active: true,
-    created_at: new Date(),
-  },
-});
+    const batch = await tx.medicineBatch.create({
+      data: {
+        shop_id: dto.shop_id,
+        medicine_id: medicine.id,
+        batch_no: dto.batch_no,
+        manufacture_date: new Date(dto.manufacture_date),
+        expiry_date: new Date(dto.expiry_date),
+        HSN: dto.hsncode,
 
+        quantity: dto.quantity,
+        free_quantity: dto.free_quantity ?? 0,
+        total_quantity: dto.total_quantity,
+        unit: dto.unit,
+
+        purchase_price_unit: dto.purchase_price_unit,
+        purchase_price_quantity: dto.purchase_price_quantity,
+        selling_price_unit: dto.selling_price_unit,
+        selling_price_quantity: dto.selling_price_quantity,
+
+        mrp: dto.mrp,
+        profit: dto.profit,
+        purchase_details: dto.purchase_details,
+
+        rack_no: dto.rack_no,
+        supplier_id: dto.supplier_id,
+
+        total_stock: dto.total_stock, // ✅ FIXED
+        is_active: true,
+        created_at: new Date(),
+      },
+    });
 
     // 3️⃣ Stock Movement (IN)
     const stock = await tx.stockMovement.create({
@@ -114,7 +118,7 @@ async createMedicineWithBatchAndStock(dto: CreateMedicineWithBatchDto) {
         shop_id: dto.shop_id,
         batch_id: batch.id,
         movement_type: StockMovementType.IN,
-        quantity: dto.stock_quantity,
+        quantity: dto.total_stock, // ✅ FIXED
         reason: dto.reason,
       },
     });
@@ -123,61 +127,71 @@ async createMedicineWithBatchAndStock(dto: CreateMedicineWithBatchDto) {
   });
 }
 
+
 async createBatchWithStock(
   medicine_id: number,
   dto: CreateBatchWithStockDto,
 ) {
   return prisma.$transaction(async (tx) => {
 
-   const batch = await tx.medicineBatch.create({
-  data: {
-    shop_id: dto.shop_id,
-medicine_id: medicine_id,
-    batch_no: dto.batch_no,
-    manufacture_date: new Date(dto.manufacture_date),
-    expiry_date: new Date(dto.expiry_date),
-    HSN: dto.hsncode,
-    quantity: dto.quantity,
-    free_quantity: dto.free_quantity ?? 0,
-    total_quantity: dto.total_quantity,
-    unit: dto.unit,
-    purchase_price_unit: dto.purchase_price_unit,
-    purchase_price_quantity: dto.purchase_price_quantity,
-    selling_price_unit: dto.selling_price_unit,
-    selling_price_quantity: dto.selling_price_quantity,
-    mrp: dto.mrp,
-    profit: dto.profit,
-    purchase_details: dto.purchase_details,
-    rack_no: dto.rack_no,
-    supplier_id: dto.supplier_id,
-    total_stock: dto.stock_quantity,
-    is_active: true,
-    created_at: new Date(),
-  },
-});
+    // 1️⃣ Create Batch
+    const batch = await tx.medicineBatch.create({
+      data: {
+        shop_id: dto.shop_id,
+        medicine_id,
 
+        batch_no: dto.batch_no,
+        manufacture_date: new Date(dto.manufacture_date),
+        expiry_date: new Date(dto.expiry_date),
 
-    // 📦 Stock IN movement
+        HSN: dto.hsncode,
+        rack_no: dto.rack_no,
+
+        quantity: dto.quantity,
+        free_quantity: dto.free_quantity ?? 0,
+        total_quantity: dto.total_quantity,
+        unit: dto.unit,
+
+        purchase_price_unit: dto.purchase_price_unit,
+        purchase_price_quantity: dto.purchase_price_quantity,
+        selling_price_unit: dto.selling_price_unit,
+        selling_price_quantity: dto.selling_price_quantity,
+
+        mrp: dto.mrp,
+        profit: dto.profit,
+        purchase_details: dto.purchase_details,
+
+        supplier_id: dto.supplier_id,
+
+        total_stock: dto.total_stock,
+        is_active: true,
+        created_at: new Date(),
+      },
+    });
+
+    // 2️⃣ Stock IN
     const stock = await tx.stockMovement.create({
       data: {
         shop_id: dto.shop_id,
         batch_id: batch.id,
-        movement_type: 'IN',
-        quantity: dto.stock_quantity,
+        movement_type: StockMovementType.IN, // ✅ enum-safe
+        quantity: dto.total_stock,
         reason: dto.reason,
       },
     });
 
-    // ⬆️ Update medicine stock
-   await tx.medicine.update({
-  where: { id: medicine_id },
-  data: { stock: { increment: dto.stock_quantity } },
-});
-
+    // 3️⃣ Update Medicine Stock
+    await tx.medicine.update({
+      where: { id: medicine_id },
+      data: {
+        stock: { increment: dto.total_stock },
+      },
+    });
 
     return { batch, stock };
   });
 }
+
 
 async getMedicineWithBatches(medicine_id: number) {
   return prisma.medicine.findUnique({
@@ -210,6 +224,17 @@ async getAllMedicinesWithBatches(shop_id: number) {
         orderBy: {
           created_at: 'desc',
         },
+        include: {
+          supplier: {
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+              email: true,
+              address: true,
+            },
+          },
+        },
       },
     },
     orderBy: {
@@ -217,6 +242,7 @@ async getAllMedicinesWithBatches(shop_id: number) {
     },
   });
 }
+
 
 async updateMedicineOrBatchStatus(dto: UpdateInventoryStatusDto) {
   const { shop_id, medicine_id, batch_id, is_active } = dto;

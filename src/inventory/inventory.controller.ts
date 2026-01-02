@@ -62,32 +62,39 @@ getAllMedicineHistory(
 @Post('medicine')
 async createMedicine(@Body() body: any) {
   const dto: CreateMedicineWithBatchDto = {
-    shop_id: body.shop_id,
+    shop_id: Number(body.shop_id),
     name: body.name,
     category: body.category,
+
     ndc_code: body.ndc_code,
     reorder: body.reorder,
+
     batch_no: body.batch_no,
     manufacture_date: body.mfg_date,
     expiry_date: body.exp_date,
+
     hsncode: body.hsncode,
+    rack_no: body.rack_no,
+
     quantity: Number(body.quantity),
     free_quantity: Number(body.free_quantity || 0),
     total_quantity: Number(body.total_quantity),
     unit: Number(body.unit),
-    purchase_price_unit: Number(body.purchasePerUnit),
-    purchase_price_quantity: Number(body.purchasePerQuantity),
-    selling_price_unit: Number(body.sellingPerUnit),
-    selling_price_quantity: Number(body.sellingPerQuantity),
-    mrp: Number(body.mrp),
-    profit: Number(body.profit),
+    total_stock: Number(body.total_stock),
+
+    purchase_price_unit: Number(body.purchase_price_per_unit),
+    purchase_price_quantity: Number(body.purchase_price_per_quantity),
+    selling_price_unit: Number(body.selling_price_per_unit),
+    selling_price_quantity: Number(body.selling_price_per_quantity),
+
+    profit: Number(body.profit_percent),
+    mrp: body.mrp ? Number(body.mrp) : undefined,
+
     purchase_details: body.purchase_details,
-    rack_no: body.rack_no,
-    supplier_id: body.selectedSupplierId,
-    stock_quantity: Number(body.total_stock),
+
+    supplier_id: body.supplier_id,
+ 
     reason: 'Initial Stock',
-    seller_name: body.seller_name || '',
-    seller_phone: body.phone || '',
   };
 
   return this.service.createMedicineWithBatchAndStock(dto);
@@ -100,34 +107,39 @@ createBatch(
   @Param('medicineId') medicineId: string,
   @Body() body: any,
 ) {
-
   const dto: CreateBatchWithStockDto = {
     shop_id: Number(body.shop_id),
-batch_no: body.batch_no,
+
+    batch_no: body.batch_no,
     manufacture_date: body.mfg_date,
     expiry_date: body.exp_date,
+
     hsncode: body.hsncode,
+    rack_no: body.rack_no,
+
     quantity: Number(body.quantity),
     free_quantity: Number(body.free_quantity || 0),
     total_quantity: Number(body.total_quantity),
     unit: Number(body.unit),
-    purchase_price_unit: Number(body.purchasePerUnit),
-    purchase_price_quantity: Number(body.purchasePerQuantity),
-    selling_price_unit: Number(body.sellingPerUnit),
-    selling_price_quantity: Number(body.sellingPerQuantity),
-    mrp: Number(body.mrp),
-    profit: Number(body.profit),
+
+    total_stock: Number(body.total_stock), // ✅ FIX
+
+    purchase_price_unit: Number(body.purchase_price_per_unit),
+    purchase_price_quantity: Number(body.purchase_price_per_quantity),
+    selling_price_unit: Number(body.selling_price_per_unit),
+    selling_price_quantity: Number(body.selling_price_per_quantity),
+
+    profit: body.profit_percent ? Number(body.profit_percent) : undefined,
+    mrp: body.mrp ? Number(body.mrp) : undefined,
+
     purchase_details: body.purchase_details,
-    rack_no: body.rack_no,
-    supplier_id: body.selectedSupplierId,
-     stock_quantity: Number(body.total_stock), // ✅ Fixed: removed duplicate
-    reason: body.reason ?? 'New Batch', // ✅ Fixed: removed duplicate
-    seller_name: body.seller_name || '',
-    seller_phone: body.phone || '',
-   
+
+    supplier_id: body.supplier_id,
+
+    reason: body.reason ?? 'New Batch',
   };
 
-  return this.service.createBatchWithStock(+medicineId, dto);
+  return this.service.createBatchWithStock(Number(medicineId), dto);
 }
 
 

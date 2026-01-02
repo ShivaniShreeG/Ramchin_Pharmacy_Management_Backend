@@ -142,7 +142,7 @@ const newQuantity = Math.ceil(
   where: { id: item.batch_id },
   data: {
     total_stock: newTotalStock,
-    quantity: newQuantity, // ✅ derived AFTER total_stock
+    total_quantity: newQuantity, // ✅ derived AFTER total_stock
   },
 });
 

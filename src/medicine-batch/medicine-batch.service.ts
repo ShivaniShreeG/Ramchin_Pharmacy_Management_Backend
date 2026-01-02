@@ -73,7 +73,7 @@ getDeactivatedMedicineBatches(shopId: number) {
     },
   });
 }
-// medicine-batch.service.ts
+
 async removeBatch(
   shopId: number,
   medicineId: number,
@@ -104,7 +104,7 @@ async removeBatch(
       where: { id: batchId },
       data: {
         total_stock: 0,
-        quantity: 0,
+        total_quantity: 0,
         is_active: false,
       },
     });
