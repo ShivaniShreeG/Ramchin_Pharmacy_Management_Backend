@@ -24,6 +24,13 @@ export class BillingController {
   async getBillingHistory(@Param('shopId', ParseIntPipe) shopId: number) {
     return this.billingService.getBillingHistory(shopId);
   }
+@Get(':shopId/:billId')
+  async getBillDetails(
+    @Param('shopId', ParseIntPipe) shopId: number,
+    @Param('billId', ParseIntPipe) billId: number,
+  ) {
+    return this.billingService.getBillDetails(shopId, billId);
+  }
 
   // ✅ STEP 1: PHONE → CUSTOMER NAMES
   @Get('customers/by-phone/:shopId')

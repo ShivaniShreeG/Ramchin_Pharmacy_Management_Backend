@@ -18,6 +18,15 @@ async getMedicineStockHistory(shop_id: number) {
     include: {
       batches: {
         include: {
+          supplier: {
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+              email: true,
+              address: true,
+            },
+          },
           movements: {
             orderBy: {
               movement_date: 'desc',
@@ -34,6 +43,7 @@ async getMedicineStockHistory(shop_id: number) {
     },
   });
 }
+
 
    async checkBatchExists(
     shopId: number,

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable,NotFoundException } from '@nestjs/common';
 import { PrismaClient, StockMovementType, PaymentMode } from '@prisma/client';
 import { CreateBillDto } from './dto/create-bill.dto';
 
@@ -33,6 +33,30 @@ async getBillingHistory(shopId: number) {
   }
 }
 
+  async getBillDetails(shopId: number, billId: number) {
+    const bill = await prisma.bill.findUnique({
+      where: {
+        shop_id_bill_id: {
+          shop_id: shopId,
+          bill_id: billId,
+        },
+      },
+      include: {
+        items: {
+          include: {
+            medicine: true,
+            batch: true,
+          },
+        },
+      },
+    });
+
+    if (!bill) {
+      throw new NotFoundException('Bill not found');
+    }
+
+    return bill;
+  }
 
   async getCustomerNamesByPhone(shopId: number, phone: string) {
   const bills = await prisma.bill.findMany({
