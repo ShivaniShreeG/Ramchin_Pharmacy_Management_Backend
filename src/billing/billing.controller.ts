@@ -31,7 +31,15 @@ export class BillingController {
   ) {
     return this.billingService.getBillDetails(shopId, billId);
   }
-
+ @Get('history/grouped/:shopId')
+  async getGroupedBillingHistory(
+    @Param('shopId') shopId: string,
+  ) {
+    return this.billingService.getBillingHistoryGroupedByCustomer(
+      Number(shopId),
+    );
+  }
+  
   // ✅ STEP 1: PHONE → CUSTOMER NAMES
   @Get('customers/by-phone/:shopId')
   async getCustomersByPhone(

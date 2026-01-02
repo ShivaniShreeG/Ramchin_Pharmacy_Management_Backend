@@ -83,6 +83,7 @@ async searchMedicines(shopId: number, query: string) {
         select: {
           id: true,
           batch_no: true,
+          rack_no: true,               // ✅ ADD THIS
           total_stock: true,
           unit: true,
           selling_price_unit: true,
@@ -99,6 +100,7 @@ async searchMedicines(shopId: number, query: string) {
     batches: med.batches.map(b => ({
       id: b.id,
       batch_no: b.batch_no,
+      rack_no:b.rack_no,
       available_qty: b.total_stock ,
       selling_price: b.selling_price_unit,
       unit: b.unit,

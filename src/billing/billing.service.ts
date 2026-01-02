@@ -7,6 +7,51 @@ const prisma = new PrismaClient();
 @Injectable()
 export class BillingService {
 
+  
+  async getBillingHistoryGroupedByCustomer(shopId: number) {
+    try {
+      const bills = await prisma.bill.findMany({
+        where: {
+          shop_id: shopId,
+        },
+        include: {
+          items: {
+            include: {
+              medicine: true, // all medicine fields
+              batch: true,    // all batch fields (rack_no included)
+            },
+          },
+        },
+        orderBy: {
+          created_at: 'desc',
+        },
+      });
+
+      // 🔹 GROUP BY PHONE + CUSTOMER NAME
+      const grouped = bills.reduce((acc, bill) => {
+        const key = `${bill.phone}__${bill.customer_name}`;
+
+        if (!acc[key]) {
+          acc[key] = {
+            phone: bill.phone,
+            customer_name: bill.customer_name,
+            bills: [],
+          };
+        }
+
+        acc[key].bills.push(bill);
+
+        return acc;
+      }, {} as Record<string, any>);
+
+      // ✅ return array (easy for frontend)
+      return Object.values(grouped);
+
+    } catch (error) {
+      console.error('Error fetching billing history:', error);
+      throw new Error('Failed to fetch billing history');
+    }
+  }
 async getBillingHistory(shopId: number) {
   try {
     const bills = await prisma.bill.findMany({
