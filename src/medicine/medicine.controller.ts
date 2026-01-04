@@ -10,6 +10,15 @@ getAllMedicines(@Param('shop_id') shop_id: string) {
   return this.service.getAllMedicinesWithBatches(+shop_id);
 }
 
+@Get('by-id/:shop_id/:id')
+async getMedicineById(
+  @Param('shop_id') shop_id: string,
+  @Param('id') id: string
+) {
+  return this.service.getMedicine(+shop_id, +id);
+}
+
+
   @Get('low-stock/:shopId')
   async getLowStockMedicines(
     @Param('shopId') shopId: string,

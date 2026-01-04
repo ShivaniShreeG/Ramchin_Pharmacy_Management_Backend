@@ -36,6 +36,15 @@ export class MedicineService {
   });
 }
 
+async getMedicine(shop_id: number, id: number) {
+  return prisma.medicine.findFirst({
+    where: {
+      id,         
+      shop_id,     
+    },
+  });
+}
+
 async searchMedicines(shopId: number, query: string) {
   const today = new Date();
 

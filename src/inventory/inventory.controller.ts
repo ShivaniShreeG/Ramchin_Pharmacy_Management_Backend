@@ -8,6 +8,14 @@ import { CreateBatchWithStockDto } from './dto/create-batch-with-stock.dto';
 export class InventoryController {
   constructor(private service: InventoryService) {}
 
+  @Post('medicine/batch-upload')
+async bulkBatchUpload(@Body() body: any) {
+  const shopId = Number(body.shop_id);
+  const batches = body.batches ?? [];
+
+  return this.service.createBulkBatchWithStock(shopId, batches);
+}
+
   @Get('history/:shop_id')
 getAllMedicineHistory(
   @Param('shop_id', ParseIntPipe) shop_id: number,
