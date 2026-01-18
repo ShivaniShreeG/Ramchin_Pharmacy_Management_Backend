@@ -1,10 +1,24 @@
-import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { MedicineValueService } from './medicine-value.service';
 
 @Controller('medicine-value')
 export class MedicineValueController {
   constructor(private readonly medicineValueService: MedicineValueService) {}
 
+ @Get('stock-summary/:shopId')
+  getDailyStockSummary(
+    @Param('shopId', ParseIntPipe) shopId: number,
+    @Query('date') date?: string,
+  ) {
+    const summaryDate =
+      date || new Date().toISOString().split('T')[0]; // default today
+
+    return this.medicineValueService.getDailyStockSummary(
+      shopId,
+      summaryDate,
+    );
+  }
+  
   // Overall
   @Get('overall/:shopId')
   getOverall(@Param('shopId', ParseIntPipe) shopId: number) {

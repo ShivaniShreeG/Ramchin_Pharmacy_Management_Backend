@@ -10,6 +10,93 @@ const prisma = new PrismaClient();
 @Injectable()
 export class InventoryService {
 
+  async createBulkMedicineWithBatchAndStock(
+  shopId: number,
+  batches: any[],
+) {
+  return prisma.$transaction(async (tx) => {
+
+    const results: {
+      medicine_id: number;
+      batch_id: number;
+    }[] = [];
+
+    for (const body of batches) {
+
+      // 1️⃣ CREATE MEDICINE
+      const medicine = await tx.medicine.create({
+        data: {
+          shop_id: shopId,
+          name: body.medicine_name,
+          category: body.category,
+          ndc_code: body.ndc_code,
+          reorder: Number(body.reorder_level) || 0,
+          stock: Number(body.total_stock), // initial stock
+        },
+      });
+
+      // 2️⃣ CREATE BATCH
+      const batch = await tx.medicineBatch.create({
+        data: {
+          shop_id: shopId,
+          medicine_id: medicine.id,
+
+          batch_no: body.batch_no,
+          manufacture_date: new Date(body.mfg_date),
+          expiry_date: new Date(body.exp_date),
+
+          HSN: body.hsncode,
+          rack_no: body.rack_no,
+
+          quantity: Number(body.quantity),
+          free_quantity: Number(body.free_quantity || 0),
+          total_quantity: Number(body.total_quantity),
+          unit: Number(body.unit),
+
+          purchase_price_unit: Number(body.purchase_price_per_unit),
+          purchase_price_quantity: Number(body.purchase_price_per_quantity),
+          selling_price_unit: Number(body.selling_price_per_unit),
+          selling_price_quantity: Number(body.selling_price_per_quantity),
+
+          mrp: body.mrp ? Number(body.mrp) : undefined,
+          profit: body.profit_percent
+            ? Number(body.profit_percent)
+            : undefined,
+
+          purchase_details: body.purchase_details,
+          supplier_id: Number(body.supplier_id),
+
+          total_stock: Number(body.total_stock),
+          is_active: true,
+          created_at: new Date(),
+        },
+      });
+
+      // 3️⃣ STOCK MOVEMENT
+      await tx.stockMovement.create({
+        data: {
+          shop_id: shopId,
+          batch_id: batch.id,
+          movement_type: StockMovementType.IN,
+          quantity: Number(body.total_stock),
+          reason: body.reason ?? 'Bulk Medicine Upload',
+        },
+      });
+
+      results.push({
+        medicine_id: medicine.id,
+        batch_id: batch.id,
+      });
+    }
+
+    return {
+      message: 'Bulk medicine upload successful',
+      total_uploaded: results.length,
+      data: results,
+    };
+  });
+}
+
   async createBulkBatchWithStock(
   shopId: number,
   batches: any[],
