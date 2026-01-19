@@ -24,4 +24,16 @@ export class UpdateShopDto {
   @IsOptional()
   @IsDate()
   duedate?: Date; // Match Prisma field name exactly
+
+   @IsOptional()
+  @IsString()
+  gst_number?: string;
+
+  @IsOptional()
+  @IsString()
+  dl_number?: string;
+
+  @IsOptional()
+  @IsString()
+  tin_number?: string;
 }

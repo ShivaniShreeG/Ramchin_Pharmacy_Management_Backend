@@ -36,6 +36,9 @@ model Shop {
   phone      String
   email      String
   logo       Bytes?
+  gst_number String?   // ✅ GST Number
+  dl_number  String?   // ✅ Drug License Number
+  tin_number String?   // ✅ TIN Number
   created_at DateTime  @default(now())
   duedate    DateTime?
   is_active  Boolean   @default(true)

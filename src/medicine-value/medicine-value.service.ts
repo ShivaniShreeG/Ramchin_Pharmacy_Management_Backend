@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 @Injectable()
 export class MedicineValueService {
 
-async getDailyStockSummary(shopId: number, date: string) {
+  async getDailyStockSummary(shopId: number, date: string) {
   const startOfDay = new Date(date + 'T00:00:00');
   const endOfDay = new Date(date + 'T23:59:59');
 
@@ -111,7 +111,6 @@ async getDailyStockSummary(shopId: number, date: string) {
   };
 }
 
-
   // ✅ Overall value
   async getOverallValue(shopId: number) {
     const batches = await prisma.medicineBatch.findMany({
@@ -173,7 +172,6 @@ async getDailyStockSummary(shopId: number, date: string) {
     totalStock: data.totalStock,
   }));
 }
-
 
   // ✅ Batch-wise value
   async getBatchWiseValue(shopId: number) {

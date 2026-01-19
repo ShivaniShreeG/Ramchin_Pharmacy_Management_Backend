@@ -86,28 +86,32 @@ export class ShopService {
   }
 
   // Update lodge
-  async updateShop(id: number, updateShopDto: UpdateShopDto) {
-    const { name, phone, email, address, logo, duedate } = updateShopDto;
+async updateShop(id: number, updateShopDto: UpdateShopDto) {
+  const { name, phone, email, address, logo, duedate, gst_number, dl_number, tin_number } = updateShopDto;
 
-    const shop = await prisma.shop.findUnique({ where: { shop_id: id } });
-    if (!shop) throw new NotFoundException(`Shop with ID ${id} not found`);
+  const shop = await prisma.shop.findUnique({ where: { shop_id: id } });
+  if (!shop) throw new NotFoundException(`Shop with ID ${id} not found`);
 
-    const logoBuffer = logo ? Buffer.from(logo, 'base64') : undefined;
+  const logoBuffer = logo ? Buffer.from(logo, 'base64') : undefined;
 
-    const updatedShop = await prisma.shop.update({
-      where: { shop_id: id },
-      data: {
-        name,
-        phone,
-        email,
-        address,
-        duedate: duedate ? new Date(duedate) : shop.duedate,
-        logo: logoBuffer || shop.logo,
-      },
-    });
+  const updatedShop = await prisma.shop.update({
+    where: { shop_id: id },
+    data: {
+      name,
+      phone,
+      email,
+      address,
+      duedate: duedate ? new Date(duedate) : shop.duedate,
+      logo: logoBuffer || shop.logo,
+      gst_number: gst_number ?? shop.gst_number,
+      dl_number: dl_number ?? shop.dl_number,
+      tin_number: tin_number ?? shop.tin_number,
+    },
+  });
 
-    return this.toBase64(updatedShop);
-  }
+  return this.toBase64(updatedShop);
+}
+
 
   // Block / Unblock lodge
   async blockShop(id: number, block: boolean, reason?: string) {
