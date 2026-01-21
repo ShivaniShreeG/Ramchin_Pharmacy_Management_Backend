@@ -75,29 +75,17 @@ async getMedicine(shop_id: number, id: number) {
 }
 
 async searchMedicines(shopId: number, query: string) {
+  if (!query) return [];
+
   const today = new Date();
 
   const medicines = await prisma.medicine.findMany({
     where: {
       shop_id: shopId,
       is_active: true,
-      OR: [
-  {
-    name: {
-      contains: query,
-    },
-  },
-  {
-    name: {
-      contains: query.toLowerCase(),
-    },
-  },
-  {
-    name: {
-      contains: query.toUpperCase(),
-    },
-  },
-],
+      name: {
+        startsWith: query, // ✅ Only matches medicines starting with query
+      },
       batches: {
         some: {
           is_active: true,
@@ -121,7 +109,7 @@ async searchMedicines(shopId: number, query: string) {
         select: {
           id: true,
           batch_no: true,
-          rack_no: true,               // ✅ ADD THIS
+          rack_no: true,
           total_stock: true,
           unit: true,
           selling_price_unit: true,
@@ -129,23 +117,27 @@ async searchMedicines(shopId: number, query: string) {
         },
       },
     },
-    take: 10,
+    take: 10, // Limit to 10 results
   });
 
+  // Map the result to your desired output format
   return medicines.map(med => ({
     id: med.id,
     name: med.name,
     batches: med.batches.map(b => ({
       id: b.id,
       batch_no: b.batch_no,
-      rack_no:b.rack_no,
-      available_qty: b.total_stock ,
+      rack_no: b.rack_no,
+      available_qty: b.total_stock,
       selling_price: b.selling_price_unit,
       unit: b.unit,
       expiry_date: b.expiry_date,
     })),
   }));
 }
+
+
+
 
 async getLowStockMedicines(shopId: number) {
   const medicines = await prisma.medicine.findMany({

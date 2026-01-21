@@ -36,9 +36,9 @@ model Shop {
   phone      String
   email      String
   logo       Bytes?
-  gst_number String?   // ✅ GST Number
-  dl_number  String?   // ✅ Drug License Number
-  tin_number String?   // ✅ TIN Number
+  gst_number String? // ✅ GST Number
+  dl_number  String? // ✅ Drug License Number
+  tin_number String? // ✅ TIN Number
   created_at DateTime  @default(now())
   duedate    DateTime?
   is_active  Boolean   @default(true)
@@ -55,6 +55,7 @@ model Shop {
   medicineBatches MedicineBatch[]
   bills           Bill[]
   stockMovements  StockMovement[]
+  orderReceiveds  OrderReceived[]
 
   @@unique([name, address])
 }
@@ -164,20 +165,49 @@ model Message {
   shop Shop @relation(fields: [shop_id], references: [shop_id])
 }
 
-model Medicine {
-  id         Int      @id @default(autoincrement())
-  shop_id    Int
-  name       String
-  category   String
-  stock      Int
-  ndc_code   String?
-  reorder    Int?
-  is_active  Boolean  @default(true)
-  created_at DateTime @default(now())
+enum MedicineOrderStatus {
+  ORDERED
+  NOT_ORDERED
+}
 
-  shop      Shop            @relation(fields: [shop_id], references: [shop_id])
-  batches   MedicineBatch[]
-  billItems BillItem[]
+model Medicine {
+  id           Int                 @id @default(autoincrement())
+  shop_id      Int
+  name         String
+  category     String
+  stock        Int
+  ndc_code     String?
+  reorder      Int?
+  order_status MedicineOrderStatus @default(NOT_ORDERED) // ✅ new field
+  is_active    Boolean             @default(true)
+  created_at   DateTime            @default(now())
+
+  shop           Shop            @relation(fields: [shop_id], references: [shop_id])
+  batches        MedicineBatch[]
+  billItems      BillItem[]
+  orderReceiveds OrderReceived[]
+}
+
+enum OrderStatus {
+  ORDERED
+  RECEIVED
+}
+
+model OrderReceived {
+  id            Int         @id @default(autoincrement())
+  shop_id       Int
+  medicine_id   Int
+  quantity      Int
+  status        OrderStatus @default(ORDERED)
+  order_date    DateTime    @default(now())
+  received_date DateTime? // ✅ Date when the order is actually received
+  created_at    DateTime    @default(now())
+  updated_at    DateTime?   @updatedAt
+
+  shop     Shop     @relation(fields: [shop_id], references: [shop_id])
+  medicine Medicine @relation(fields: [medicine_id], references: [id])
+
+  @@index([shop_id])
 }
 
 model MedicineBatch {
