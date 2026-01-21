@@ -52,6 +52,7 @@ export class BillingService {
       throw new Error('Failed to fetch billing history');
     }
   }
+
 async getBillingHistory(shopId: number) {
   try {
     const bills = await prisma.bill.findMany({
@@ -156,19 +157,20 @@ async getBillingHistory(shopId: number) {
 
       const bill_id = lastBill ? lastBill.bill_id + 1 : 1;
 
-      // 2️⃣ Create Bill
-      await tx.bill.create({
-        data: {
-          shop_id,
-          bill_id,
-          user_id,
-          customer_name,
-          phone,
-          doctor_name,
-          total,
-          payment_mode,
-        },
-      });
+   // 2️⃣ Create Bill (CAPTURE RESULT)
+const createdBill = await tx.bill.create({
+  data: {
+    shop_id,
+    bill_id,
+    user_id,
+    customer_name,
+    phone,
+    doctor_name,
+    total,
+    payment_mode,
+  },
+});
+
 
       // 3️⃣ Bill Items + Stock Updates
       for (const item of items) {
@@ -249,10 +251,12 @@ const newQuantity = Math.ceil(
         },
       });
 
-      return {
-        bill_id,
-        message: 'Bill created successfully',
-      };
+     return {
+  bill_id,
+  created_at: createdBill.created_at, // ✅ SEND TO FRONTEND
+  message: 'Bill created successfully',
+};
+
     });
   }
 
