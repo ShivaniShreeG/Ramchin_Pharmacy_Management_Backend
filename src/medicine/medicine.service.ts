@@ -136,9 +136,6 @@ async searchMedicines(shopId: number, query: string) {
   }));
 }
 
-
-
-
 async getLowStockMedicines(shopId: number) {
   const medicines = await prisma.medicine.findMany({
     where: {
