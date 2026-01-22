@@ -173,8 +173,6 @@ async getLowStockMedicines(shopId: number) {
   }));
 }
 
-
-  
   create(dto: CreateMedicineDto) {
     return prisma.medicine.create({
       data: {

@@ -244,7 +244,7 @@ const newQuantity = Math.ceil(
         data: {
           shop_id,
           user_id,
-          reason: 'Medicine Billing',
+          reason: `Billing - ${bill_id}`, // ✅ include bill no
           type: 'INCOME',
           state: payment_mode,
           amount: total,

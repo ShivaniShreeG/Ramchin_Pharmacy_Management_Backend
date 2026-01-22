@@ -198,6 +198,7 @@ model OrderReceived {
   shop_id       Int
   medicine_id   Int
   quantity      Int
+  supplier_id   Int // ✅ ADD THIS
   status        OrderStatus @default(ORDERED)
   order_date    DateTime    @default(now())
   received_date DateTime? // ✅ Date when the order is actually received
@@ -206,8 +207,10 @@ model OrderReceived {
 
   shop     Shop     @relation(fields: [shop_id], references: [shop_id])
   medicine Medicine @relation(fields: [medicine_id], references: [id])
+  supplier Supplier @relation(fields: [supplier_id], references: [id]) // ✅ RELATION
 
   @@index([shop_id])
+  @@index([supplier_id])
 }
 
 model MedicineBatch {
@@ -297,15 +300,16 @@ model BillItem {
 }
 
 model Supplier {
-  id         Int             @id @default(autoincrement())
-  shop_id    Int
-  name       String
-  phone      String
-  email      String?
-  address    String?
-  is_active  Boolean         @default(true)
-  created_at DateTime        @default(now())
-  batches    MedicineBatch[]
+  id             Int             @id @default(autoincrement())
+  shop_id        Int
+  name           String
+  phone          String
+  email          String?
+  address        String?
+  is_active      Boolean         @default(true)
+  created_at     DateTime        @default(now())
+  batches        MedicineBatch[]
+  orderReceiveds OrderReceived[]
 
   @@unique([shop_id, name, phone])
 }

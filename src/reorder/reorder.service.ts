@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { CreateOrderDto } from './dto/reorder.dto';
 
 const prisma = new PrismaClient();
 
@@ -15,6 +16,8 @@ export class ReorderService {
       stock: {
         lte: prisma.medicine.fields.reorder,
       },
+     order_status: 'NOT_ORDERED',
+
     },
     include: {
       batches: {
@@ -53,7 +56,6 @@ export class ReorderService {
   });
 }
 
-
  async getSupplierWiseReorderList(shopId: number) {
   const reorderList = await this.getReorderMedicinesWithSupplier(shopId);
 
@@ -87,6 +89,73 @@ export class ReorderService {
   }
 
   return Object.values(groupedSuppliers);
+}
+
+async createMedicineOrder(
+  shopId: number,
+  dto: CreateOrderDto,
+) {
+  const { supplier_id, items } = dto;
+
+  return prisma.$transaction(async (tx) => {
+    for (const item of items) {
+      // 1️⃣ Insert into OrderReceived
+      await tx.orderReceived.create({
+        data: {
+          shop_id: shopId,                 // ✅ from param
+          supplier_id,
+          medicine_id: item.medicine_id,
+          quantity: item.quantity,
+          status: 'ORDERED',
+        },
+      });
+
+      // 2️⃣ Update Medicine status
+      await tx.medicine.update({
+        where: { id: item.medicine_id },
+        data: {
+          order_status: 'ORDERED',
+        },
+      });
+    }
+
+    return {
+      message: 'Medicine order placed successfully',
+      total_items: items.length,
+    };
+  });
+}
+
+async getOrderedMedicines(shopId: number) {
+  const orders = await prisma.orderReceived.findMany({
+    where: {
+      shop_id: shopId,
+      status: 'ORDERED',
+    },
+    include: {
+      medicine: true,
+      supplier: true,
+    },
+  });
+
+  return orders.map(o => ({
+    order_id: o.id,
+    order_date: o.order_date,
+    quantity: o.quantity,
+    medicine: {
+      id: o.medicine.id,
+      name: o.medicine.name,
+      category: o.medicine.category,
+      current_stock: o.medicine.stock,
+      reorder_level: o.medicine.reorder,
+    },
+    supplier: {
+      id: o.supplier.id,
+      name: o.supplier.name,
+      phone: o.supplier.phone,
+      email: o.supplier.email,
+    },
+  }));
 }
 
 }

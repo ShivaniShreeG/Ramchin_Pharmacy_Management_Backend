@@ -22,6 +22,7 @@ import { ReorderModule } from './reorder/reorder.module';
 import { SupplierModule } from './supplier/supplier.module';
 import { SalesModule } from './sales/sale.module';
 import { MedicineValueModule } from './medicine-value/medicine-value.module';
+import { OrderModule } from './order/order.module';
 
 @Module({
   imports: [
@@ -45,7 +46,8 @@ import { MedicineValueModule } from './medicine-value/medicine-value.module';
     ReorderModule,
     SupplierModule,
     SalesModule,
-    MedicineValueModule
+    MedicineValueModule,
+    OrderModule
   ],
   controllers: [AppController],
   providers: [AppService],
