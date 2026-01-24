@@ -109,8 +109,17 @@ async getFinanceSummary(shopId: number) {
       for (const item of bill.items) {
         totalUnitsSold += item.unit;
         totalSales += item.total_price;
-        totalProfit += (item.batch.selling_price_unit - item.batch.purchase_price_unit) * item.unit;
-      }
+ const purchasePrice = item.batch.purchase_price_unit;
+    const sellingPrice = item.batch.selling_price_unit;
+
+    const paidUnits = item.paid_unit ?? 0;
+    const freeUnits = item.free_unit ?? 0;
+
+    const profit =
+      (paidUnits * (sellingPrice - purchasePrice)) +
+      (freeUnits * sellingPrice);
+
+    totalProfit += profit;      }
     }
   }
 

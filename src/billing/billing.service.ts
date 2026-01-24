@@ -194,6 +194,26 @@ const newQuantity = Math.ceil(
         if ((batch.total_stock ?? 0) < reduction) {
           throw new Error(`Insufficient stock in batch ${batch.batch_no}`);
         }
+const soldUnits = item.quantity; // tablets
+const unitPerStrip = batch.unit;
+
+// total free units from purchase
+const totalFreeUnits =
+  (batch.free_quantity ?? 0) * unitPerStrip;
+
+// stock BEFORE this sale
+const totalStockBeforeSale = batch.total_stock ?? 0;
+
+// remaining paid units BEFORE this sale
+const paidUnitsAvailable = Math.max(
+  0,
+  totalStockBeforeSale - totalFreeUnits
+);
+
+// calculate free & paid units sold
+const freeUnitsSold = Math.max(0, soldUnits - paidUnitsAvailable);
+const paidUnitsSold = soldUnits - freeUnitsSold;
+
 
         // 3.1 Bill item
         await tx.billItem.create({
@@ -205,6 +225,8 @@ const newQuantity = Math.ceil(
             unit: item.quantity, // tablets
             unit_price: item.unit_price,
             total_price: item.total_price,
+             paid_unit: paidUnitsSold,
+    free_unit: freeUnitsSold,
           },
         });
 

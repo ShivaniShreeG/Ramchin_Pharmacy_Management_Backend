@@ -13,6 +13,15 @@ export class SubmitTicketController {
     return this.service.create(dto);
   }
 
+  // GET /submit-ticket/:shop_id/:user_id
+@Get(':shop_id/:user_id')
+findByShopAndUser(
+  @Param('shop_id') shop_id: string,
+  @Param('user_id') user_id: string,
+) {
+  return this.service.findByShopAndUser(Number(shop_id), user_id);
+}
+
   @Get('shop/:shop_id')
   findAllByShop(@Param('shop_id') shop_id: string) {
     return this.service.findAllByShop(Number(shop_id));

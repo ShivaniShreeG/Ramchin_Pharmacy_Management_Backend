@@ -10,6 +10,46 @@ const prisma = new PrismaClient();
 export class UserService {
   // 🔹 Get all active admins in a lodge
 
+  // 🔁 UPDATE ADMIN STATUS
+async updateAdminStatus(
+  shopId: number,
+  userId: string,
+  isActive: boolean,
+) {
+  // 1️⃣ Check user exists
+  const user = await prisma.user.findUnique({
+    where: {
+      user_id_shop_id: {
+        user_id: userId,
+        shop_id: shopId,
+      },
+    },
+  });
+
+  if (!user) {
+    throw new NotFoundException(
+      `User ${userId} not found in shop ${shopId}`,
+    );
+  }
+
+  // 2️⃣ Update user active status
+  await prisma.user.update({
+    where: {
+      user_id_shop_id: {
+        user_id: userId,
+        shop_id: shopId,
+      },
+    },
+    data: {
+      is_active: isActive,
+    },
+  });
+
+  return {
+    message: `Admin status updated to ${isActive ? 'Active' : 'Inactive'}`,
+  };
+}
+
    async checkUserAvailability(shopId: number, userId: string) {
     const exists = await prisma.user.findUnique({
       where: {
@@ -23,6 +63,33 @@ export class UserService {
     return { available: !exists };
   }
   
+  async getUserAdminsByShop(shopId: number) {
+  const admins = await prisma.admin.findMany({
+    where: {
+      shop_id: Number(shopId),
+    },
+    include: {
+      user: {
+        select: {
+          user_id: true,
+          role: true,
+          is_active: true,
+        },
+      },
+    },
+  });
+
+  return admins.map(a => ({
+    user_id: a.user_id,
+    name: a.name,
+    designation: a.designation,
+    phone: a.phone,
+    email: a.email,
+    is_active: a.user.is_active, // ✅ REQUIRED
+    role: a.user.role,           // optional (future use)
+  }));
+}
+
   async getAdminsByShop(shopId: number) {
     const admins = await prisma.admin.findMany({
       where: {
@@ -47,19 +114,77 @@ export class UserService {
 
   // 🔹 Soft delete admin
   async deleteAdmin(shopId: number, userId: string) {
+  
+    // 1️⃣ Check user exists
     const user = await prisma.user.findUnique({
-      where: { user_id_shop_id: { user_id: userId, shop_id: shopId } },
+      where: {
+        user_id_shop_id: {
+          user_id: userId,
+          shop_id: shopId,
+        },
+      },
     });
-
-    if (!user)
-      throw new NotFoundException(`User ${userId} not found in shop ${shopId}`);
-
-    await prisma.user.update({
-      where: { user_id_shop_id: { user_id: userId, shop_id: shopId } },
-      data: { is_active: false },
+  
+    if (!user) {
+      throw new NotFoundException(
+        `User ${userId} not found in shop ${shopId}`,
+      );
+    }
+  
+    // 2️⃣ Finance check
+    const financeCount = await prisma.finance.count({
+      where: { user_id: userId, shop_id: shopId },
     });
-
-    return { message: `User ${userId} deactivated successfully` };
+    if (financeCount > 0) {
+      throw new BadRequestException(
+        'Admin cannot be deleted: finance records exist.',
+      );
+    }
+  
+    // 3️⃣ Ticket check
+    const ticketCount = await prisma.submitTicket.count({
+      where: { user_id: userId, shop_id: shopId },
+    });
+    if (ticketCount > 0) {
+      throw new BadRequestException(
+        'Admin cannot be deleted: support tickets exist.',
+      );
+    }
+  
+    // 4️⃣ Billing check
+    const billCount = await prisma.bill.count({
+      where: { user_id: userId, shop_id: shopId },
+    });
+    if (billCount > 0) {
+      throw new BadRequestException(
+        'Admin cannot be deleted: billing history exists.',
+      );
+    }
+  
+    // 5️⃣ ORDER check (🔥 IMPORTANT)
+   
+    await prisma.$transaction([
+      prisma.admin.deleteMany({
+        where: { user_id: userId, shop_id: shopId },
+      }),
+  
+      prisma.administrator.deleteMany({
+        where: { user_id: userId, shop_id: shopId },
+      }),
+  
+      prisma.user.delete({
+        where: {
+          user_id_shop_id: {
+            user_id: userId,
+            shop_id: shopId,
+          },
+        },
+      }),
+    ]);
+  
+    return {
+      message: `Admin ${userId} deleted successfully`,
+    };
   }
 
   // 🔹 Get user with lodge + admin data

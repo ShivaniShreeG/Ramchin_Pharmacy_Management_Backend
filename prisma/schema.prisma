@@ -295,7 +295,7 @@ model Bill {
 }
 
 model BillItem {
-  id          Int   @id @default(autoincrement())
+  id          Int           @id @default(autoincrement())
   shop_id     Int
   bill_id     Int
   medicine_id Int
@@ -303,10 +303,11 @@ model BillItem {
   unit        Int
   unit_price  Float
   total_price Float
-
-  bill     Bill          @relation(fields: [shop_id, bill_id], references: [shop_id, bill_id])
-  medicine Medicine      @relation(fields: [medicine_id], references: [id])
-  batch    MedicineBatch @relation(fields: [batch_id], references: [id])
+  paid_unit   Int? // ✅ NEW
+  free_unit   Int? // ✅ NEW
+  bill        Bill          @relation(fields: [shop_id, bill_id], references: [shop_id, bill_id])
+  medicine    Medicine      @relation(fields: [medicine_id], references: [id])
+  batch       MedicineBatch @relation(fields: [batch_id], references: [id])
 }
 
 model Supplier {

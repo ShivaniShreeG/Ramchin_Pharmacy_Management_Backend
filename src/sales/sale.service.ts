@@ -49,8 +49,12 @@ export class SalesService {
         const purchasePricePerUnit = item.batch.purchase_price_unit;
         const sellingPricePerUnit = item.batch.selling_price_unit;
 
-        const profit = (sellingPricePerUnit - purchasePricePerUnit) * item.unit;
-        totalProfit += profit;
+        const paidUnits = item.paid_unit ?? 0;
+const freeUnits = item.free_unit ?? 0;
+
+const profit =
+  (paidUnits * (sellingPricePerUnit - purchasePricePerUnit)) +
+  (freeUnits * sellingPricePerUnit);
 
         // Medicine-wise aggregation
         const key = item.medicine.name;

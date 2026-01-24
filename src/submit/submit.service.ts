@@ -80,6 +80,13 @@ export class SubmitTicketService {
     };
   }
 
+  async findByShopAndUser(shop_id: number, user_id: string) {
+  return prisma.submitTicket.findMany({
+    where: { shop_id, user_id },
+    orderBy: { created_at: 'desc' },
+  });
+}
+
   // Get all tickets
   async findAll() {
     return prisma.submitTicket.findMany({

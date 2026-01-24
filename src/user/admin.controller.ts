@@ -1,4 +1,4 @@
-import { Controller, Get, Delete, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Delete, Param, ParseIntPipe, Patch, Body } from '@nestjs/common';
 import { UserService } from './user.service';
 
 @Controller('admins')
@@ -13,10 +13,26 @@ export class UserFullController {
     return this.userService.getUserWithAdmin(shopId, userId);
   }
 
+    // 🔁 UPDATE ADMIN ACTIVE STATUS
+  @Patch(':shopId/admin/:userId/status/update')
+  updateAdminStatus(
+    @Param('shopId', ParseIntPipe) shopId: number,
+    @Param('userId') userId: string,
+    @Body('is_active') isActive: boolean,
+  ) {
+    return this.userService.updateAdminStatus(shopId, userId, isActive);
+  }
+
+  @Get('user/details/active/:shopId')
+  getUserAdminsByShop(@Param('shopId', ParseIntPipe) shopId: number) {
+    return this.userService.getUserAdminsByShop(shopId);
+  }
+
   @Get(':shopId')
   getAdminsByShop(@Param('shopId', ParseIntPipe) shopId: number) {
     return this.userService.getAdminsByShop(shopId);
   }
+
 
   @Delete(':shopId/admin/:userId')
   deleteAdmin(
