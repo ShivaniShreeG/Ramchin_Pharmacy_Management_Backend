@@ -5,10 +5,7 @@ import { MedicineService } from './medicine.service';
 export class MedicineController {
   constructor(private service: MedicineService) {}
 
-  @Get('categories/shop/:shop_id')
-getExtraCategories(@Param('shop_id') shop_id: string) {
-  return this.service.getExtraCategories(+shop_id);
-}
+
 
   @Get('available/shop/:shop_id')
 getAllMedicines(@Param('shop_id') shop_id: string) {

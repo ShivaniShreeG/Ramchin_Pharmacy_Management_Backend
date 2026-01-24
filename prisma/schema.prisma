@@ -29,6 +29,24 @@ enum PaymentMode {
   ONLINE
 }
 
+enum TicketStatus {
+  PENDING
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum MedicineOrderStatus {
+  ORDERED
+  NOT_ORDERED
+}
+
+enum OrderStatus {
+  ORDERED
+  RECEIVED
+}
+
 model Shop {
   shop_id    Int       @id @default(autoincrement())
   name       String
@@ -146,11 +164,13 @@ model Finance {
 }
 
 model SubmitTicket {
-  id         Int      @id @default(autoincrement())
+  id         Int          @id @default(autoincrement())
   shop_id    Int
   user_id    String
   issue      String
-  created_at DateTime @default(now())
+  status     TicketStatus @default(PENDING)
+  created_at DateTime     @default(now())
+  updated_at DateTime     @updatedAt
 
   shop Shop @relation(fields: [shop_id], references: [shop_id])
   user User @relation(fields: [user_id, shop_id], references: [user_id, shop_id])
@@ -163,11 +183,6 @@ model Message {
   created_at DateTime @default(now())
 
   shop Shop @relation(fields: [shop_id], references: [shop_id])
-}
-
-enum MedicineOrderStatus {
-  ORDERED
-  NOT_ORDERED
 }
 
 model Medicine {
@@ -186,11 +201,6 @@ model Medicine {
   batches        MedicineBatch[]
   billItems      BillItem[]
   orderReceiveds OrderReceived[]
-}
-
-enum OrderStatus {
-  ORDERED
-  RECEIVED
 }
 
 model OrderReceived {

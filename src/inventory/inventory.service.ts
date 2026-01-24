@@ -10,6 +10,35 @@ const prisma = new PrismaClient();
 @Injectable()
 export class InventoryService {
 
+    async getExtraCategories(shop_id: number) {
+  const defaultCategories = [
+    'Tablets',
+    'Syrups',
+    'Drops',
+    'Ointments',
+    'Creams',
+    'Soap',
+    'Other',
+  ];
+
+  const result = await prisma.medicine.findMany({
+    where: {
+      shop_id,
+      is_active: true,
+      category: {
+        notIn: defaultCategories,
+      },
+    },
+    select: {
+      category: true,
+    },
+    distinct: ['category'], // ✅ IMPORTANT
+  });
+
+  // Return as string array
+  return result.map((r) => r.category);
+}
+
   async createBulkMedicineWithBatchAndStock(
   shopId: number,
   batches: any[],
