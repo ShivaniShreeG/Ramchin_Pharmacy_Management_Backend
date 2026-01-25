@@ -77,7 +77,7 @@ async searchMedicines(shopId: number, query: string) {
           total_stock: { gt: 0 },
         },
         orderBy: {
-          created_at: 'asc',
+          expiry_date: 'asc',
         },
         select: {
           id: true,
