@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { CreateMedicineWithBatchDto } from './dto/create-medicine-with-batch.dto';
 import { StockMovementType } from '@prisma/client';
 import { PrismaClient } from '@prisma/client';
 import { UpdateInventoryStatusDto } from './dto/update-inventory-status.dto';
 import { CreateBatchWithStockDto } from './dto/create-batch-with-stock.dto';
+import { CreateExistingMedicineDto } from './dto/exist-medicine.dto';
 
 const prisma = new PrismaClient();
 
@@ -52,9 +53,16 @@ export class InventoryService {
 
     for (const body of batches) {
 
+      const lastMedicine = await tx.medicine.findFirst({
+  where: { shop_id: shopId },
+  orderBy: { id: 'desc' },
+});
+
+const medicineId = lastMedicine ? lastMedicine.id + 1 : 1;
       // 1️⃣ CREATE MEDICINE
       const medicine = await tx.medicine.create({
         data: {
+          id: medicineId,      // 👈 per-shop medicine id
           shop_id: shopId,
           name: body.medicine_name,
           category: body.category,
@@ -203,8 +211,12 @@ const batch = await tx.medicineBatch.create({
         },
       });
  await tx.medicine.update({
-        where: { id: medicineId },
-        data: {
+where: {
+  shop_id_id: {
+    shop_id: shopId,
+    id: medicineId,
+  },
+},        data: {
           stock: { increment: dto.total_stock },
         },
       });
@@ -288,10 +300,16 @@ async getMedicineStockHistory(shop_id: number) {
 
 async createMedicineWithBatchAndStock(dto: CreateMedicineWithBatchDto) {
   return prisma.$transaction(async (tx) => {
+const lastMedicine = await tx.medicine.findFirst({
+  where: { shop_id: dto.shop_id },
+  orderBy: { id: 'desc' },
+});
 
+const medicineId = lastMedicine ? lastMedicine.id + 1 : 1;
     // 1️⃣ Create Medicine
     const medicine = await tx.medicine.create({
       data: {
+        id: medicineId,      // 👈 per-shop medicine id
         shop_id: dto.shop_id,
         name: dto.name,
         category: dto.category,
@@ -404,8 +422,12 @@ async createBatchWithStock(
 
     // 3️⃣ Update Medicine Stock
     await tx.medicine.update({
-      where: { id: medicine_id },
-      data: {
+where: {
+  shop_id_id: {
+    shop_id: dto.shop_id,
+    id: medicine_id,
+  },
+},      data: {
         stock: { increment: dto.total_stock },
       },
     });
@@ -414,10 +436,194 @@ async createBatchWithStock(
   });
 }
 
+async createBulkExistingMedicineWithStock(
+  shopId: number,
+  batches: any[],
+) {
+  if (!shopId || !Array.isArray(batches) || batches.length === 0) {
+    throw new BadRequestException('Invalid payload');
+  }
 
-async getMedicineWithBatches(medicine_id: number) {
+  return prisma.$transaction(async (tx) => {
+
+    // ✅ FIX 1: explicitly type results
+    const results: {
+      medicine: any;
+      batch: any;
+      stock: any;
+    }[] = [];
+
+    // 🔹 get last medicine id ONCE
+    const lastMedicine = await tx.medicine.findFirst({
+      where: { shop_id: shopId },
+      orderBy: { id: 'desc' },
+    });
+
+    let nextMedicineId = lastMedicine ? lastMedicine.id + 1 : 1;
+
+    for (const b of batches) {
+
+      // 🔴 validations (NDC optional)
+      if (
+        !b.medicine_name ||
+        !b.category ||
+        !b.batch_no ||
+        !b.mfg_date ||
+        !b.exp_date ||
+        !b.unit ||
+        Number(b.unit) <= 0 ||
+        b.total_stock === undefined ||
+        Number(b.total_stock) < 0
+      ) {
+        throw new BadRequestException(
+          `Invalid data for medicine ${b.medicine_name ?? ''}`,
+        );
+      }
+
+      // 1️⃣ Create Medicine
+      const medicine = await tx.medicine.create({
+        data: {
+          id: nextMedicineId++,
+          shop_id: shopId,
+          name: b.medicine_name.trim(),
+          category: b.category,
+          ndc_code: b.ndc_code?.trim() || null, // ✅ optional
+          reorder: Number(b.reorder_level ?? 0),
+          stock: Number(b.total_stock),
+          is_active: true,
+        },
+      });
+
+      // 2️⃣ Create Batch
+      const batch = await tx.medicineBatch.create({
+        data: {
+          shop_id: shopId,
+          medicine_id: medicine.id,
+
+          batch_no: b.batch_no,
+          rack_no: b.rack_no ?? null,
+
+          manufacture_date: new Date(b.mfg_date),
+          expiry_date: new Date(b.exp_date),
+
+          total_quantity: Number(b.total_quantity),
+          unit: Number(b.unit),
+
+          selling_price_unit: Number(b.selling_price_per_unit ?? 0),
+          selling_price_quantity: Number(b.selling_price_per_quantity ?? 0),
+
+          total_stock: Number(b.total_stock),
+          is_active: true,
+          created_at: new Date(),
+        },
+      });
+
+      // 3️⃣ Stock Movement (IN)
+      const stock = await tx.stockMovement.create({
+        data: {
+          shop_id: shopId,
+          batch_id: batch.id,
+          movement_type: StockMovementType.IN,
+          quantity: Number(b.total_stock),
+          reason: 'Initial Stock',
+        },
+      });
+
+      results.push({ medicine, batch, stock });
+    }
+
+    return {
+      count: results.length,
+      message: 'Bulk existing medicine upload successful',
+      data: results,
+    };
+  });
+}
+
+
+   // ✅ Create existing medicine (single)
+  async createExistingMedicine(dto: CreateExistingMedicineDto) {
+    if (!dto.mfg_date || !dto.exp_date) {
+  throw new BadRequestException('MFG and EXP dates are required');
+}
+if (!dto.unit || !dto.total_stock) {
+  throw new BadRequestException('Unit and total stock must be valid numbers');
+}
+if (dto.unit === undefined || dto.unit <= 0) {
+  throw new BadRequestException('Unit must be greater than 0');
+}
+
+if (dto.total_stock === undefined || dto.total_stock < 0) {
+  throw new BadRequestException('Total stock must be 0 or more');
+}
+
+    return prisma.$transaction(async (tx) => {
+      const lastMedicine = await tx.medicine.findFirst({
+        where: { shop_id: dto.shop_id },
+        orderBy: { id: 'desc' },
+      });
+
+      const medicineId = lastMedicine ? lastMedicine.id + 1 : 1;
+
+     const medicine = await tx.medicine.create({
+  data: {
+    id: medicineId,
+    shop_id: dto.shop_id,
+    name: dto.name,
+    category: dto.category,
+    ndc_code: dto.ndc_code ?? null,
+    stock: Number(dto.total_stock), // ✅ number
+    reorder: dto.reorder ?? 0,
+    is_active: true,
+  },
+});
+
+    const batch = await tx.medicineBatch.create({
+  data: {
+    shop_id: dto.shop_id,
+    medicine_id: medicine.id,
+    batch_no: dto.batch_no,
+
+    manufacture_date: new Date(dto.mfg_date!), // ✅ no null
+    expiry_date: new Date(dto.exp_date!),      // ✅ no null
+
+    total_quantity: Number(dto.total_quantity),
+    unit: Number(dto.unit),
+
+    selling_price_unit: dto.selling_price_per_unit ?? 0,
+    selling_price_quantity: dto.selling_price_per_quantity ?? 0,
+
+    rack_no: dto.rack_no ?? null,
+    total_stock: Number(dto.total_stock),
+
+    is_active: true,
+    created_at: new Date(),
+  },
+});
+
+      const stock = await tx.stockMovement.create({
+  data: {
+    shop_id: dto.shop_id,
+    batch_id: batch.id,
+    movement_type: StockMovementType.IN,
+    quantity: Number(dto.total_stock), // ✅ FIXED
+    reason: 'Initial Stock',
+  },
+});
+
+
+      return { medicine, batch, stock };
+    });
+  }
+
+async getMedicineWithBatches(medicine_id: number,shop_id: number) {
   return prisma.medicine.findUnique({
-    where: { id: medicine_id },
+where: {
+  shop_id_id: {
+    shop_id: shop_id,
+    id: medicine_id,
+  },
+},
     include: {
       batches: {
         orderBy: { created_at: 'desc' },
@@ -487,13 +693,21 @@ async updateMedicineOrBatchStatus(dto: UpdateInventoryStatusDto) {
       // If batch is being activated, ensure parent medicine is also active
       if (is_active) {
         const medicine = await tx.medicine.findUnique({
-          where: { id: medicine_id },
-        });
+where: {
+  shop_id_id: {
+    shop_id: dto.shop_id,
+    id: dto.medicine_id,
+  },
+},        });
 
         if (medicine && !medicine.is_active) {
           await tx.medicine.update({
-            where: { id: medicine_id },
-            data: { is_active: true },
+where: {
+  shop_id_id: {
+    shop_id: dto.shop_id,
+    id: dto.medicine_id,
+  },
+},         data: { is_active: true },
           });
         }
       }

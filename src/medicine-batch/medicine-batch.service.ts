@@ -111,8 +111,12 @@ async removeBatch(
 
     // 3️⃣ Update medicine stock
     await tx.medicine.update({
-      where: { id: medicineId },
-      data: {
+where: {
+  shop_id_id: {
+    shop_id: shopId,
+    id: medicineId,
+  },
+},      data: {
         stock: {
           decrement: stockToRemove,
         },

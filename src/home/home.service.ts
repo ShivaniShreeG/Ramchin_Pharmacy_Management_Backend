@@ -109,7 +109,7 @@ async getFinanceSummary(shopId: number) {
       for (const item of bill.items) {
         totalUnitsSold += item.unit;
         totalSales += item.total_price;
- const purchasePrice = item.batch.purchase_price_unit;
+ const purchasePrice = item.batch.purchase_price_unit?? 0;
     const sellingPrice = item.batch.selling_price_unit;
 
     const paidUnits = item.paid_unit ?? 0;

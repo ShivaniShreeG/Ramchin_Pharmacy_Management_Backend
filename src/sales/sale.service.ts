@@ -46,7 +46,7 @@ export class SalesService {
       for (const item of bill.items) {
         totalUnitsSold += item.unit;
 
-        const purchasePricePerUnit = item.batch.purchase_price_unit;
+        const purchasePricePerUnit = item.batch.purchase_price_unit?? 0;
         const sellingPricePerUnit = item.batch.selling_price_unit;
 
         const paidUnits = item.paid_unit ?? 0;
@@ -87,4 +87,5 @@ const profit =
       bills,
     };
   }
+  
 }

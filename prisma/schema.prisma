@@ -186,7 +186,7 @@ model Message {
 }
 
 model Medicine {
-  id           Int                 @id @default(autoincrement())
+  id           Int
   shop_id      Int
   name         String
   category     String
@@ -201,6 +201,44 @@ model Medicine {
   batches        MedicineBatch[]
   billItems      BillItem[]
   orderReceiveds OrderReceived[]
+
+  @@id([shop_id, id]) // ✅ composite PK
+  @@unique([shop_id, id]) // (implicit, but explicit is fine)
+}
+
+model MedicineBatch {
+  id                      Int      @id @default(autoincrement())
+  shop_id                 Int
+  medicine_id             Int
+  HSN                     String?
+  batch_no                String
+  expiry_date             DateTime
+  manufacture_date        DateTime
+  total_stock             Int?
+  total_quantity          Int?
+  quantity                Int?
+  free_quantity           Int?
+  unit                    Int
+  rack_no                 String?
+  mrp                     Float?
+  profit                  Float?
+  purchase_price_unit     Float?
+  purchase_price_quantity Float?
+  selling_price_quantity  Float
+  selling_price_unit      Float
+  purchase_details        Json?
+  supplier_id             Int? // ✅ THIS WAS MISSING
+  is_active               Boolean  @default(true)
+  created_at              DateTime @default(now())
+
+  shop     Shop      @relation(fields: [shop_id], references: [shop_id])
+  medicine Medicine  @relation(fields: [shop_id, medicine_id], references: [shop_id, id])
+  supplier Supplier? @relation(fields: [shop_id, supplier_id], references: [shop_id, id])
+
+  movements StockMovement[]
+  billItems BillItem[]
+
+  @@unique([shop_id, medicine_id, batch_no])
 }
 
 model OrderReceived {
@@ -216,47 +254,14 @@ model OrderReceived {
   updated_at    DateTime?   @updatedAt
 
   shop     Shop     @relation(fields: [shop_id], references: [shop_id])
-  medicine Medicine @relation(fields: [medicine_id], references: [id])
-  supplier Supplier @relation(fields: [supplier_id], references: [id]) // ✅ RELATION
+  medicine Medicine @relation(fields: [shop_id, medicine_id], references: [shop_id, id])
+  supplier Supplier @relation(fields: [shop_id, supplier_id], references: [shop_id, id])
 
   @@index([shop_id])
   @@index([supplier_id])
 }
 
-model MedicineBatch {
-  id                      Int      @id @default(autoincrement())
-  shop_id                 Int
-  medicine_id             Int
-  HSN                     String?
-  batch_no                String
-  expiry_date             DateTime
-  manufacture_date        DateTime
-  total_stock             Int?
-  total_quantity          Int?
-  quantity                Int
-  free_quantity           Int?
-  unit                    Int
-  rack_no                 String?
-  mrp                     Float?
-  profit                  Float?
-  purchase_price_unit     Float
-  purchase_price_quantity Float
-  selling_price_quantity  Float
-  selling_price_unit      Float
-  purchase_details        Json?
-  supplier_id             Int? // ✅ THIS WAS MISSING
-  is_active               Boolean  @default(true)
-  created_at              DateTime @default(now())
 
-  shop     Shop      @relation(fields: [shop_id], references: [shop_id])
-  medicine Medicine  @relation(fields: [medicine_id], references: [id])
-  supplier Supplier? @relation(fields: [supplier_id], references: [id])
-
-  movements StockMovement[]
-  billItems BillItem[]
-
-  @@unique([shop_id, medicine_id, batch_no])
-}
 
 model StockMovement {
   id            Int               @id @default(autoincrement())
@@ -306,12 +311,12 @@ model BillItem {
   paid_unit   Int? // ✅ NEW
   free_unit   Int? // ✅ NEW
   bill        Bill          @relation(fields: [shop_id, bill_id], references: [shop_id, bill_id])
-  medicine    Medicine      @relation(fields: [medicine_id], references: [id])
+  medicine    Medicine      @relation(fields: [shop_id, medicine_id], references: [shop_id, id])
   batch       MedicineBatch @relation(fields: [batch_id], references: [id])
 }
 
 model Supplier {
-  id             Int             @id @default(autoincrement())
+  id             Int
   shop_id        Int
   name           String
   phone          String
@@ -322,5 +327,6 @@ model Supplier {
   batches        MedicineBatch[]
   orderReceiveds OrderReceived[]
 
+  @@id([shop_id, id]) // ✅ composite PK
   @@unique([shop_id, name, phone])
 }

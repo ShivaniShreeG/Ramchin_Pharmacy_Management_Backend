@@ -112,8 +112,13 @@ async createMedicineOrder(
 
       // 2️⃣ Update Medicine status
       await tx.medicine.update({
-        where: { id: item.medicine_id },
-        data: {
+where: {
+  shop_id_id: {
+    shop_id: shopId,
+    id: item.medicine_id,
+  },
+}      ,
+  data: {
           order_status: 'ORDERED',
         },
       });

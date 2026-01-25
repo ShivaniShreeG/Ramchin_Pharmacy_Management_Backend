@@ -3,10 +3,17 @@ import { InventoryService } from './inventory.service';
 import { UpdateInventoryStatusDto } from './dto/update-inventory-status.dto';
 import { CreateMedicineWithBatchDto } from './dto/create-medicine-with-batch.dto';
 import { CreateBatchWithStockDto } from './dto/create-batch-with-stock.dto';
+import { CreateExistingMedicineDto } from './dto/exist-medicine.dto';
 
 @Controller('inventory')
 export class InventoryController {
   constructor(private service: InventoryService) {}
+
+  
+@Post('medicine/existing-med')
+  async createExisting(@Body() body: CreateExistingMedicineDto) {
+    return this.service.createExistingMedicine(body);
+  }
 
     @Get('medicine/categories/:shop_id')
 getExtraCategories(@Param('shop_id') shop_id: string) {
@@ -68,6 +75,16 @@ async createMedicine(@Body() body: any) {
   };
 
   return this.service.createMedicineWithBatchAndStock(dto);
+}
+@Post('medicine/medicine-exist-upload')
+async bulkExistingMedicineUpload(@Body() body: any) {
+  const shopId = Number(body.shop_id);
+  const batches = body.batches ?? [];
+
+  return this.service.createBulkExistingMedicineWithStock(
+    shopId,
+    batches,
+  );
 }
 
   @Get('history/:shop_id')
@@ -164,11 +181,9 @@ createBatch(
   return this.service.createBatchWithStock(Number(medicineId), dto);
 }
 
-
-
-@Get('medicine/:id')
-getMedicine(@Param('id') id: string) {
-  return this.service.getMedicineWithBatches(+id);
+@Get('medicine/:id/shop/:shop_id')
+getMedicine(@Param('id') id: string, @Param('shop_id') shop_id: string) {
+  return this.service.getMedicineWithBatches(+id, +shop_id);
 }
 
 @Get('medicine/shop/:shop_id')

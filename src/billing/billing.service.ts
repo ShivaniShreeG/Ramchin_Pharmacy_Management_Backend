@@ -242,8 +242,12 @@ const paidUnitsSold = soldUnits - freeUnitsSold;
 
         // 3.3 Update medicine stock
         await tx.medicine.update({
-          where: { id: item.medicine_id },
-          data: {
+  where: {
+    shop_id_id: {
+      shop_id,
+      id: item.medicine_id,
+    },
+  },          data: {
             stock: { decrement: reduction },
           },
         });

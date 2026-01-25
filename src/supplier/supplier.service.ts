@@ -26,14 +26,28 @@ export class SupplierService {
     });
   }
   // ➕ Create Supplier
-  create(shopId: number, dto: CreateSupplierDto) {
-    return prisma.supplier.create({
+ async create(shopId: number, dto: CreateSupplierDto) {
+  return prisma.$transaction(async (tx) => {
+
+    // 1️⃣ Get last supplier for this shop
+    const lastSupplier = await tx.supplier.findFirst({
+      where: { shop_id: shopId },
+      orderBy: { id: 'desc' },
+    });
+
+    const supplierId = lastSupplier ? lastSupplier.id + 1 : 1;
+
+    // 2️⃣ Create supplier
+    return tx.supplier.create({
       data: {
+        id: supplierId,
         shop_id: shopId,
         ...dto,
       },
     });
-  }
+  });
+}
+
 
   // 📄 Get all suppliers of a shop
   findAll(shopId: number) {
@@ -64,8 +78,13 @@ export class SupplierService {
     await this.findOne(shopId, id);
 
     return prisma.supplier.update({
-      where: { id },
-      data: dto,
+where: {
+  shop_id_id: {
+    shop_id: shopId,
+    id: id,
+  },
+}  ,
+    data: dto,
     });
   }
 
@@ -74,9 +93,12 @@ async remove(shopId: number, id: number) {
   await this.findOne(shopId, id);
 
   return prisma.supplier.update({
-    where: { 
-      id 
-    },
+    where: {
+  shop_id_id: {
+    shop_id: shopId,
+    id: id,
+  },
+},
     data: { 
       is_active: false // ✅ Soft delete instead of hard delete
     }
