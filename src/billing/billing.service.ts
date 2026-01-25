@@ -194,26 +194,34 @@ const newQuantity = Math.ceil(
         if ((batch.total_stock ?? 0) < reduction) {
           throw new Error(`Insufficient stock in batch ${batch.batch_no}`);
         }
-const soldUnits = item.quantity; // tablets
-const unitPerStrip = batch.unit;
+        
+let paidUnitsSold = 0;
+let freeUnitsSold = 0;
 
-// total free units from purchase
-const totalFreeUnits =
-  (batch.free_quantity ?? 0) * unitPerStrip;
+// 🔥 EXISTING / LEGACY STOCK
+if (batch.purchase_price_unit == null) {
+  // No purchase info → treat everything as FREE
+  freeUnitsSold = item.quantity;
+  paidUnitsSold = 0;
+} 
+// 🔥 NORMAL PURCHASED STOCK
+else {
+  const soldUnits = item.quantity;
+  const unitPerStrip = batch.unit ?? 1;
 
-// stock BEFORE this sale
-const totalStockBeforeSale = batch.total_stock ?? 0;
+  const totalFreeUnits =
+    (batch.free_quantity ?? 0) * unitPerStrip;
 
-// remaining paid units BEFORE this sale
-const paidUnitsAvailable = Math.max(
-  0,
-  totalStockBeforeSale - totalFreeUnits
-);
+  const totalStockBeforeSale = batch.total_stock ?? 0;
 
-// calculate free & paid units sold
-const freeUnitsSold = Math.max(0, soldUnits - paidUnitsAvailable);
-const paidUnitsSold = soldUnits - freeUnitsSold;
+  const paidUnitsAvailable = Math.max(
+    0,
+    totalStockBeforeSale - totalFreeUnits
+  );
 
+  freeUnitsSold = Math.max(0, soldUnits - paidUnitsAvailable);
+  paidUnitsSold = soldUnits - freeUnitsSold;
+}
 
         // 3.1 Bill item
         await tx.billItem.create({
