@@ -4,12 +4,42 @@ import { UpdateInventoryStatusDto } from './dto/update-inventory-status.dto';
 import { CreateMedicineWithBatchDto } from './dto/create-medicine-with-batch.dto';
 import { CreateBatchWithStockDto } from './dto/create-batch-with-stock.dto';
 import { CreateExistingMedicineDto } from './dto/exist-medicine.dto';
+import { CreateExistingBatchDto } from './dto/CreateExistingBatchDto.dto';
 
 @Controller('inventory')
 export class InventoryController {
   constructor(private service: InventoryService) {}
 
-  
+  @Post('medicine/:medicineId/batch-exist')
+async createBatchForExistingMedicine(
+  @Param('medicineId') medicineId: string,
+  @Body() body: any,
+) {
+  const dto: CreateExistingBatchDto = {
+    shop_id: Number(body.shop_id),
+
+    batch_no: body.batch_no,
+    mfg_date: body.mfg_date,
+    exp_date: body.exp_date,
+
+    rack_no: body.rack_no,
+
+    total_quantity: Number(body.total_quantity),
+    unit: Number(body.unit),
+    total_stock: Number(body.total_stock),
+
+    selling_price_per_unit: Number(body.selling_price_per_unit),
+    selling_price_per_quantity: Number(body.selling_price_per_quantity),
+
+    reason: body.reason ?? 'Existing Batch Added',
+  };
+
+  return this.service.createBatchForExistingMedicine(
+    Number(medicineId),
+    dto,
+  );
+}
+
 @Post('medicine/existing-med')
   async createExisting(@Body() body: CreateExistingMedicineDto) {
     return this.service.createExistingMedicine(body);
@@ -76,12 +106,28 @@ async createMedicine(@Body() body: any) {
 
   return this.service.createMedicineWithBatchAndStock(dto);
 }
+
 @Post('medicine/medicine-exist-upload')
 async bulkExistingMedicineUpload(@Body() body: any) {
   const shopId = Number(body.shop_id);
   const batches = body.batches ?? [];
 
   return this.service.createBulkExistingMedicineWithStock(
+    shopId,
+    batches,
+  );
+}
+
+@Post('medicine/batch-upload-exist')
+async bulkExistingBatchUpload(@Body() body: any) {
+  const shopId = Number(body.shop_id);
+  const batches = body.batches;
+
+  if (!shopId || !Array.isArray(batches) || batches.length === 0) {
+    throw new BadRequestException('Invalid payload');
+  }
+
+  return this.service.createBulkBatchesForExistingMedicines(
     shopId,
     batches,
   );
@@ -141,6 +187,7 @@ getAllMedicineHistory(
 
 
   // Create Batch + Stock for existing medicine
+  
 @Post('medicine/:medicineId/batch')
 createBatch(
   @Param('medicineId') medicineId: string,

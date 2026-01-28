@@ -7,7 +7,6 @@ const prisma = new PrismaClient();
 @Injectable()
 export class BillingService {
 
-  
   async getBillingHistoryGroupedByCustomer(shopId: number) {
     try {
       const bills = await prisma.bill.findMany({

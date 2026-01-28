@@ -1,15 +1,90 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { CreateMedicineWithBatchDto } from './dto/create-medicine-with-batch.dto';
 import { StockMovementType } from '@prisma/client';
-import { PrismaClient } from '@prisma/client';
+import {
+  PrismaClient,
+  MedicineBatch,
+  StockMovement,
+} from '@prisma/client';
 import { UpdateInventoryStatusDto } from './dto/update-inventory-status.dto';
 import { CreateBatchWithStockDto } from './dto/create-batch-with-stock.dto';
 import { CreateExistingMedicineDto } from './dto/exist-medicine.dto';
+import { CreateExistingBatchDto } from './dto/CreateExistingBatchDto.dto';
 
 const prisma = new PrismaClient();
 
 @Injectable()
 export class InventoryService {
+
+  async createBatchForExistingMedicine(
+  medicine_id: number,
+  dto: CreateExistingBatchDto,
+) {
+  // ✅ validations
+  if (!dto.mfg_date || !dto.exp_date) {
+    throw new BadRequestException('MFG and EXP dates are required');
+  }
+
+  if (!dto.unit || dto.unit <= 0) {
+    throw new BadRequestException('Unit must be greater than 0');
+  }
+
+  if (dto.total_stock === undefined || dto.total_stock < 0) {
+    throw new BadRequestException('Total stock must be 0 or more');
+  }
+
+  return prisma.$transaction(async (tx) => {
+    // 1️⃣ Create Batch
+    const batch = await tx.medicineBatch.create({
+      data: {
+        shop_id: dto.shop_id,
+        medicine_id,
+
+        batch_no: dto.batch_no,
+        manufacture_date: new Date(dto.mfg_date),
+        expiry_date: new Date(dto.exp_date),
+
+        rack_no: dto.rack_no ?? null,
+
+        total_quantity: dto.total_quantity,
+        unit: dto.unit,
+        total_stock: dto.total_stock,
+
+        selling_price_unit: dto.selling_price_per_unit,
+        selling_price_quantity: dto.selling_price_per_quantity,
+
+        is_active: true,
+        created_at: new Date(),
+      },
+    });
+
+    // 2️⃣ Stock IN
+    const stock = await tx.stockMovement.create({
+      data: {
+        shop_id: dto.shop_id,
+        batch_id: batch.id,
+        movement_type: StockMovementType.IN,
+        quantity: dto.total_stock,
+        reason: dto.reason ?? 'Existing Batch Added',
+      },
+    });
+
+    // 3️⃣ Update Medicine Stock
+    await tx.medicine.update({
+      where: {
+        shop_id_id: {
+          shop_id: dto.shop_id,
+          id: medicine_id,
+        },
+      },
+      data: {
+        stock: { increment: dto.total_stock },
+      },
+    });
+
+    return { batch, stock };
+  });
+}
 
     async getExtraCategories(shop_id: number) {
   const defaultCategories = [
@@ -539,6 +614,88 @@ async createBulkExistingMedicineWithStock(
     };
   });
 }
+
+async createBulkBatchesForExistingMedicines(
+  shopId: number,
+  batches: any[],
+) {
+  return prisma.$transaction(async (tx) => {
+
+  const results: {
+  batch: MedicineBatch;
+  stock: StockMovement;
+}[] = [];
+
+
+    for (const b of batches) {
+      if (!b.medicine_id) {
+        throw new BadRequestException('Medicine ID is required');
+      }
+
+      const dto: CreateExistingBatchDto = {
+        shop_id: shopId,
+        batch_no: b.batch_no,
+        rack_no: b.rack_no,
+        mfg_date: b.mfg_date,
+        exp_date: b.exp_date,
+        total_stock: Number(b.total_stock),
+        total_quantity: Number(b.total_quantity),
+        unit: Number(b.unit),
+        selling_price_per_unit: Number(b.selling_price_per_unit),
+        selling_price_per_quantity: Number(b.selling_price_per_quantity),
+      };
+
+      const batch = await tx.medicineBatch.create({
+        data: {
+          shop_id: shopId,
+          medicine_id: Number(b.medicine_id),
+          batch_no: dto.batch_no,
+          rack_no: dto.rack_no ?? null,
+          manufacture_date: new Date(dto.mfg_date),
+          expiry_date: new Date(dto.exp_date),
+          total_quantity: dto.total_quantity,
+          unit: dto.unit,
+          total_stock: dto.total_stock,
+          selling_price_unit: dto.selling_price_per_unit,
+          selling_price_quantity: dto.selling_price_per_quantity,
+          is_active: true,
+          created_at: new Date(),
+        },
+      });
+
+      const stock = await tx.stockMovement.create({
+        data: {
+          shop_id: shopId,
+          batch_id: batch.id,
+          movement_type: StockMovementType.IN,
+          quantity: dto.total_stock,
+          reason: 'Existing Batch Added',
+        },
+      });
+
+      await tx.medicine.update({
+        where: {
+          shop_id_id: {
+            shop_id: shopId,
+            id: Number(b.medicine_id),
+          },
+        },
+        data: {
+          stock: { increment: dto.total_stock },
+        },
+      });
+
+      results.push({ batch, stock });
+    }
+
+    return {
+      count: results.length,
+      message: 'Bulk batch upload for existing medicines successful',
+      data: results,
+    };
+  });
+}
+
 
 
    // ✅ Create existing medicine (single)
