@@ -10,6 +10,11 @@ interface OtpRecord {
   otp: string;
   expiresAt: number;
 }
+const DEFAULT_ACCESS = {
+  manage: { manage: true, payment: true },
+  home: true,
+  service: { billing: true, stock_movement: true ,reports:true, view: true, history: true, accounts: true},
+};
 
 @Injectable()
 export class RegisterService {
@@ -83,6 +88,7 @@ async createShopWithAdmin(dto: CreateShopAdminDto) {
         phone: admin_phone,
         email: admin_email,
         designation: 'Owner', // ✅ Always set from backend
+        access: DEFAULT_ACCESS, // ✅ Set all toggles true
       },
     });
 

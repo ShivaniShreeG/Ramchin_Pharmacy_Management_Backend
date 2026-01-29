@@ -103,6 +103,7 @@ model Admin {
   designation String
   phone       String
   email       String
+  access Json? @default("{}") // access column
 
   shop Shop @relation(fields: [shop_id], references: [shop_id])
   user User @relation(fields: [user_id, shop_id], references: [user_id, shop_id])

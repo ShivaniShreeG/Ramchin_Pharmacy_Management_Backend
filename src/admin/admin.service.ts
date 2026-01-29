@@ -7,7 +7,6 @@ const prisma = new PrismaClient();
 export class AdminService {
   // ====== Admin table ======
 
-  // Get all admins for a lodge
   async findAllAdminsByShop(shopId: number) {
     const admins = await prisma.admin.findMany({
       where: { shop_id: shopId },
@@ -27,7 +26,6 @@ export class AdminService {
     return admins;
   }
 
-  // Get one admin by lodge + user_id
   async findAdminByShop(shopId: number, userId: string) {
     const admin = await prisma.admin.findUnique({
       where: {

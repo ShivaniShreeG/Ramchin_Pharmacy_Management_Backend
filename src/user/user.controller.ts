@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, ParseIntPipe, Patch } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 
@@ -34,4 +34,19 @@ export class UserController {
   ) {
     return this.userService.addAdmin({ ...dto, shop_id: shopId });
   }
+  
+@Patch('admins/:shopId/:userId/access')
+async updateAdminAccess(
+  @Param('shopId', ParseIntPipe) shopId: number, // 🔥 REQUIRED
+  @Param('userId') userId: string,
+  @Body() body: { access: any },
+) {
+  return this.userService.updateAdminAccess(
+    shopId,
+    userId,
+    body.access,
+  );
+}
+
+
 }

@@ -6,9 +6,61 @@ import { CreateUserDto } from './dto/create-user.dto';
 
 const prisma = new PrismaClient();
 
+const DEFAULT_ACCESS = {
+  manage: { manage: true, payment: true },
+  home: true,
+  service: { billing: true, stock_movement: true ,reports:true, view: true, history: true, accounts: true},
+};
+
 @Injectable()
 export class UserService {
   // 🔹 Get all active admins in a lodge
+
+async updateAdminAccess(
+  shopId: number,
+  userId: string,
+  access: any,
+) {
+  const admin = await prisma.admin.findUnique({
+    where: {
+      user_id_shop_id: {
+        shop_id: shopId,
+        user_id: userId,
+      },
+    },
+  });
+
+  if (!admin) {
+    throw new NotFoundException('Admin not found');
+  }
+
+  if (admin.designation?.toLowerCase() === 'owner') {
+    throw new ForbiddenException('Cannot update Owner access');
+  }
+
+  if (typeof access !== 'object' || access === null) {
+    throw new BadRequestException('Invalid access payload');
+  }
+
+  await prisma.admin.update({
+    where: {
+      user_id_shop_id: {
+        shop_id: shopId,
+        user_id: userId,
+      },
+    },
+    data: {
+      access,
+    },
+  });
+
+  return {
+    message: 'Access updated successfully',
+  };
+}
+
+
+
 
   // 🔁 UPDATE ADMIN STATUS
 async updateAdminStatus(
@@ -87,6 +139,7 @@ async updateAdminStatus(
     email: a.email,
     is_active: a.user.is_active, // ✅ REQUIRED
     role: a.user.role,           // optional (future use)
+    access:a.access,
   }));
 }
 
@@ -259,6 +312,7 @@ async updateAdminStatus(
           password: hashedPassword,
           role: Role.ADMIN,
           is_active: dto.is_active ?? true,
+          
         },
       }),
       prisma.admin.create({
@@ -269,10 +323,11 @@ async updateAdminStatus(
           name: dto.name ?? '',
           phone: dto.phone ?? '',
           email: dto.email ?? '',
+          access: DEFAULT_ACCESS, // ✅ Set all toggles true
         },
       }),
     ]);
-
+    
     return { message: 'Admin created successfully', user: newUser, admin: newAdmin };
   }
 
@@ -300,6 +355,11 @@ async findOneByShop(shopId: number, userId: string) {
       password: true,
       role: true,
       is_active: true,
+      admin: {        // ✅ join the admin table
+        select: {
+          access: true, // JSON or whatever structure you use
+        },
+      },
       shop: {
         select: {
           shop_id: true,
@@ -346,6 +406,7 @@ async findOneByShop(shopId: number, userId: string) {
     shop_id: user.shop_id,
     role: user.role,
     is_active: user.is_active,
+        access: user.admin?.access ?? {}, // ✅ include access from admin table
     userBlockReason, // frontend can use this to show dialog
     shop: {
       shop_id: user.shop.shop_id,
@@ -356,7 +417,6 @@ async findOneByShop(shopId: number, userId: string) {
     },
   };
 }
-
 
   // 🔹 Login
 async login(shopId: number, userId: string, password: string) {
@@ -432,8 +492,6 @@ if (user.role === Role.ADMIN || user.role === Role.ADMINISTRATOR) {
     return { success: false, message: 'Internal server error' };
   }
 }
-
-
 
   // 🔹 Change password
   async changePassword(shopId: number, userId: string, oldPass: string, newPass: string) {
